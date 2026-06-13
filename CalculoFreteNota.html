@@ -1,0 +1,2582 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>   
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreteNota - Controle de Frete Inteligente</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <style>
+
+        :root {
+            --color-bg-main: #f8fafc;
+            --color-bg-card: #ffffff;
+            --color-bg-sub: #f1f5f9;
+            --color-border: #cbd5e1;
+            --color-border-light: #e2e8f0;
+            --color-text-main: #0f172a;
+            --color-text-sub: #475569;
+            --color-text-muted: #94a3b8;
+            --color-primary: #1e40af;
+            --color-primary-hover: #1e3a8a;
+            --color-success: #15803d;
+            --color-success-hover: #166534;
+            --color-danger: #b91c1c;
+            --color-danger-hover: #991b1b;
+            --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: var(--color-bg-main); color: var(--color-text-main); font-family: var(--font-sans); padding: 12px; line-height: 1.4; }
+        
+        /* Modal de Confirmação */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.55); backdrop-filter: blur(2px); z-index: 10000; align-items: baseline; justify-content: center; }
+        .modal-overlay.aberto { display: flex; animation: fadeInOverlay 0.2s ease; }
+        @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
+        .modal-box { background: #fff; border-radius: 14px; padding: 32px 28px 24px; max-width: 420px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.25); display: flex; flex-direction: column; align-items: center; gap: 12px; animation: slideUpModal 0.22s ease;    margin-top: 10%; }
+        @keyframes slideUpModal { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-icon { width: 52px; height: 52px; border-radius: 50%; background: #fee2e2; display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--color-danger); margin-bottom: 4px; }
+        .modal-title { font-size: 16px; font-weight: 700; color: var(--color-text-main); text-align: center; }
+        .modal-msg { font-size: 13px; color: var(--color-text-sub); text-align: center; line-height: 1.6; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 8px; width: 100%; }
+        .modal-actions button { flex: 1; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
+        .modal-btn-cancel { background: var(--color-bg-sub); color: var(--color-text-sub); }
+        .modal-btn-cancel:hover { background: var(--color-border); }
+        .modal-btn-confirm { background: var(--color-danger); color: #fff; }
+        .modal-btn-confirm:hover { background: var(--color-danger-hover); }
+
+        .app { max-width: 1343px; margin: 0 auto; background: var(--color-bg-card); border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); overflow: hidden; min-height: 700px; display: flex; flex-direction: column;padding: 0.9%; }
+        .topbar { display: flex; align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--color-border-light); background: #fff; flex-wrap: wrap; gap: 10%; }
+        .logo { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 600; color: var(--color-primary); }
+        
+        .tabs { display: flex; gap: 4px; background: var(--color-bg-sub); border-radius: 8px; padding: 4px; }
+        .tab { padding: 8px 16px; font-size: 13px; border: none; background: transparent; cursor: pointer; border-radius: 6px; color: var(--color-text-sub); font-weight: 500; display: flex; align-items: center; gap: 6px; transition: all 0.2s; }
+        .tab:hover { color: var(--color-text-main); }
+        .tab.active { background: var(--color-bg-card); color: var(--color-primary); box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1); }
+        
+        
+        .panel { display: none; }
+        .panel.active { display: block;}
+
+        .upload-area { border: 2px dashed var(--color-border); border-radius: 10px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--color-bg-main); margin-bottom: 20px; }
+        .upload-area:hover { border-color: var(--color-primary); background: var(--color-bg-sub); }
+        .upload-area i { font-size: 42px; color: var(--color-text-muted); display: block; margin-bottom: 10px; }
+        .upload-area p { font-size: 14px; font-weight: 500; color: var(--color-text-sub); margin-bottom: 4px; }
+        .upload-area small { font-size: 12px; color: var(--color-text-muted); }
+
+        .btn { justify-content: center;padding: 8px 4px; border-radius: 6px; border: 1px solid var(--color-border); background: #fff; font-weight: 500; cursor: pointer; color: var(--color-text-sub); display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; }
+        .btn:hover { background: var(--color-bg-sub); color: var(--color-text-main); }
+        .btn.primary { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+        .btn.primary:hover { background: var(--color-primary-hover); }
+        .btn.success { background: var(--color-success); color: #fff; border-color: var(--color-success); }
+        .btn.success:hover { background: var(--color-success-hover); }
+        .btn.danger { background: var(--color-danger); color: #fff; border-color: var(--color-danger); }
+        .btn.danger:hover { background: var(--color-danger-hover); }
+        .btn.sm { padding: 4px 8px;border-radius: 4px; }
+
+        .alert { padding: 12px 16px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .alert-info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+        .alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .alert-warn { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+        .alert-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+        .loading-bar { display: none; align-items: center; gap: 12px; padding: 12px 16px; background: var(--color-bg-sub); border-radius: 6px; margin-bottom: 16px; font-size: 13px; }
+        .spinner { width: 16px; height: 16px; border: 2px solid var(--color-border); border-top-color: var(--color-primary); border-radius: 50%; animation: spin .7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .totais-grid { display: inline-grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1%;margin: 1%;width: 92%;padding-left: 5%; }
+        .tot-card { background: var(--color-bg-sub); border-radius: 8px; padding: 14px; border: 1px solid var(--color-border-light); }
+        .tot-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); font-weight: 600; margin-bottom: 4px; }
+        .tot-val { font-size: 20px; font-weight: 700; color: var(--color-text-main); }
+        
+        .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; }
+        .bg-xml { background: #e0f2fe; color: #0369a1; }
+        .bg-pdf { background: #fef3c7; color: #b45309; }
+        .bg-ok { background: #dcfce7; color: #15803d; }
+        .bg-warn { background: #fee2e2; color: #b91c1c; }
+
+        .nf-detail-box { background: #fff; border: 1px solid var(--color-border); border-radius: 10px; padding: 20px; margin-top: 20px; }
+        .nf-detail-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; border-bottom: 1px solid var(--color-border-light); padding-bottom: 12px; gap: 12px; flex-wrap: wrap; }
+        
+        table.app-table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: left; min-width: 800px; }
+        table.app-table th { background: var(--color-bg-sub); padding: 10px 0px; font-weight: 700; color: var(--color-text-sub); border-bottom: 1px solid var(--color-border-light); }
+        table.app-table td { padding: 6px 1px; border-bottom: 1px solid var(--color-border-light); vertical-align: middle; font-size: 12px; }
+        table.app-table tr:last-child td { border-bottom: none; }
+        #hist-table-tbody tr:hover {background-color: #F0F7FF;}
+	    .lote-grid select,.input-edit{ width: 20%;}
+        .input-edit { width: auto; padding: 5px 8px; border: 1px solid var(--color-border); border-radius: 4px; font-size: 12px; color: var(--color-text-main); font-family: var(--font-sans); }
+        .input-edit:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 1px var(--color-primary); }
+        .input-edit.menor{width: 48%}
+        .form-inline select.input-edit{ padding: 1.8%;}
+
+        .frete-calc-box { background: var(--color-bg-main); border-radius: 8px; padding: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; border: 1px solid var(--color-border-light); }
+        
+        .filters-row { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;padding: 0px 1% 0px 1%; }
+        .filters-row input[type="text"], .filters-row select { padding: 8px 6px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 13px; background: #fff; color: var(--color-text-main); min-width: 180px; flex: 1; }
+        .filters-row input[type="date"] { padding: 7px 10px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 13px; color: var(--color-text-main); }
+
+        .config-card { background: #fff; border: 1px solid var(--color-border); border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+        .config-sect-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--color-border-light); color: var(--color-primary); cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+        .config-sect-title:hover { color: var(--color-primary-hover); }
+        .config-sect-title > .form-inline {background: 0; border: 0;display: ruby;}
+        .config-body { display: none; padding-top: 10px; }
+        .config-body.open { display: block; }
+        
+        .cards-transp {background: var(--color-bg-sub); padding: 12px; border-radius: 6px; margin-bottom: 10px; border: 1px solid var(--color-border-light);}
+        .list-transp {display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid var(--color-border); padding-bottom:8px;}
+        .list-exc {font-size:11px; font-weight:700; color:var(--color-text-sub); margin-bottom:6px; text-transform:uppercase;}
+        .item-exc {display:flex; justify-content:space-between; align-items:center; background:#fff; padding:6px 10px; border-radius:4px; margin-top:4px; border:1px solid var(--color-border-light); font-size:11px;}
+
+        .cfg-grid-row { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; font-size: 12px; flex-wrap: wrap; }
+        .cfg-grid-row input[type="number"] { width: 60px; padding: 4px 6px; border: 1px solid var(--color-border); border-radius: 4px; text-align: center; }
+        .export-field-row label input, .export-field-row .field-border input[type=checkbox] {
+            appearance: none;
+            width: 34px;
+            height: 16px;
+            background: #838383;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: 0.2s;
+            position: relative;
+        }
+        
+        .export-field-row label input::before, .export-field-row .field-border input[type=checkbox]:before {
+            content: "";
+            width: 12px;
+            height: 12px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 3px;
+            transition: 0.2s;
+        }
+        
+        .export-field-row label input:checked, .export-field-row .field-border input[type=checkbox]:checked{background: #00da50;}
+        .export-field-row label input:checked::before, .export-field-row .field-border input[type=checkbox]:checked::before {transform: translateX(17px);}
+
+        
+        .form-inline { height: stretch;background: var(--color-bg-sub);display: grid; gap: 10px; align-items: flex-end; width: 21%; border-radius: 8px; padding: 16px; border: 1px solid var(--color-border-light); }
+        .form-group label { font-size: 11px; font-weight: 600; color: var(--color-text-sub); }
+        .form-inline:has(+ #cfg-list-destinatarios) {background: 0; display: flex; border: 0; width: 80%;}
+
+        .empty-view { text-align: center; padding: 40px 20px; color: var(--color-text-muted); font-size: 13px; }
+
+        .lote-grid { display: flex; flex-direction: column; gap: 0; margin-bottom: 20px; }
+        .lote-card {background: #fff;border: 1px solid var(--color-border); border-bottom: none; padding: 10px 16px;cursor: pointer;transition: all 0.15s;display: flex;align-items: center;gap: 16px;}
+        .lote-card:first-child { border-radius: 8px 8px 0 0; } 
+        .lote-card:nth-last-child(2) {border-radius: 0px 0px 8px 8px;border-bottom: 1px solid var(--color-border);}
+        .lote-card:hover { background: #f0f7ff; }
+        .lote-card.selected {background: #eff6ff;border-color: var(--color-primary);box-shadow: inset 3px 0 0 var(--color-primary);BORDER: 1PX SOLID var(--color-primary);}
+        .lote-card-title { font-size: 13px; font-weight: 700; color: var(--color-text-main); white-space: nowrap; min-width: 80px; }
+        .lote-card-sub { font-size: 12px; color: var(--color-text-sub); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .lote-card-itens {display: none;border: 1px solid var(--color-border);border-top: none;background: #ffffff;padding: 0;BORDER-RADIUS: 8PX;}
+        .lote-card-itens.aberto {display: block;}
+        .table-wrap {border: 1px solid var(--color-border-light);border-radius: 8px;margin: 0px 1px 18px 11px;width: 98%;overflow: hidden;}
+        .lote-card-itens table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .lote-card-itens th { background: #eef2f7; padding: 6px 10px; font-weight: 600; color: var(--color-text-sub); border-bottom: 1px solid var(--color-border-light); text-align: left; }
+        .lote-card-itens td { padding: 5px 10px; border-bottom: 1px solid var(--color-border-light); vertical-align: middle; color: var(--color-text-main); }
+        .lote-card-itens tr:last-child td { border-bottom: none; }
+        .lote-card-itens .input-edit { padding: 3px 6px; font-size: 11px; width: 75%; }
+        .lote-card-toggle { font-size: 11px; color: var(--color-primary); cursor: pointer; flex-shrink:0; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--color-border); background:#fff; }
+        .lote-card-toggle:hover { background: var(--color-bg-sub); }
+        .empty-view i { font-size: 36px; display: block; margin-bottom: 8px; }
+
+        .export-fields-grid { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden; }
+        .export-field-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #fff; border-bottom: 1px solid var(--color-border-light); font-size: 12px; cursor: grab; user-select: none; transition: background 0.15s; }
+        .export-field-row:last-child { border-bottom: none; }
+        .export-field-row:hover { background: #f8fafc; }
+        .export-field-row.dragging { opacity: 0.4; background: #eff6ff; }
+        .export-field-row.drag-over { background: #dbeafe; border-top: 2px solid var(--color-primary); }
+        .export-field-row .drag-handle { color: var(--color-text-muted); cursor: grab; font-size: 15px; flex-shrink: 0; }
+        .export-field-row .field-order { width: 22px; height: 22px; border-radius: 50%; background: var(--color-primary); color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .export-field-row .field-order.disabled { background: var(--color-border); }
+        .export-field-row .field-label { flex: 1; font-weight: 500; color: var(--color-text-main); }
+        .export-field-row .field-custom-label { flex: 0.16; }
+        .export-field-row .field-custom-label input {padding: 3px 7px; border: 1px solid var(--color-border); border-radius: 4px; font-size: 11px; color: var(--color-text-main); font-family: var(--font-sans); background: var(--color-bg-main); }
+        .export-field-row .field-custom-label input:focus { outline: none; border-color: var(--color-primary); background: #fff; }
+        .export-field-row .field-color { display:flex;align-items:center; gap:2px;}
+        .export-field-row .field-color label { font-size:14px; color:var(--color-text-muted);margin-right: 4%; }
+        .export-field-row .field-color input[type=color] { width:28px; height:22px; border:1px solid var(--color-border); border-radius:30%; cursor:pointer; padding:1px; }
+        .export-field-row .field-border { display:flex; flex-direction:column; align-items:center; gap:2px; flex-shrink:0; }
+        .export-field-row div:nth-child(n+5) {flex: 0.048;}
+        .export-field-row .field-border label { font-size:9px; color:var(--color-text-muted); }
+        .export-field-row .field-border input[type=checkbox] {cursor:pointer; }
+        .export-fields-header { display:flex; align-items:center; gap:10px; padding:6px 12px; background:var(--color-bg-sub); border-bottom:2px solid var(--color-border); font-size:10px; font-weight:700; color:var(--color-text-muted); text-transform:uppercase; letter-spacing:.5px; }
+        .export-fields-header span:nth-child(n+6) { flex: 0.057;}
+        .export-fields-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
+        .export-preview-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 4px; font-size: 11px; background: var(--color-bg-sub); border: 1px solid var(--color-border-light); color: var(--color-text-sub); }
+    </style>
+</head>
+<body>
+
+<div class="modal-overlay" id="modal-confirm-overlay">
+  <div class="modal-box">
+    <div class="modal-icon"><i class="ti ti-alert-triangle"></i></div>
+    <div class="modal-title" id="modal-confirm-title"></div>
+    <div class="modal-msg" id="modal-confirm-msg"></div>
+    <div class="modal-actions">
+      <button class="modal-btn-cancel" onclick="fecharModal()">Cancelar</button>
+      <button class="modal-btn-confirm" id="modal-confirm-btn">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+    <div class="topbar">
+        <div class="logo"><i class="ti ti-truck-delivery"></i> FreteNota v5.5</div>
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('importar', event)"><i class="ti ti-file-upload"></i> Importar NF</button>
+            <button class="tab" onclick="switchTab('historico', event)"><i class="ti ti-history"></i> Histórico</button>
+            <button class="tab" onclick="switchTab('config', event)"><i class="ti ti-settings"></i> Configurações</button>
+        </div>
+    </div>
+
+    <div class="content" style="padding-top: inherit;">
+        
+        <div class="panel active" id="panel-importar">
+            <div class="upload-area" onclick="document.getElementById('fileFiles').click()">
+                <i class="ti ti-cloud-upload"></i>
+                <p>Clique ou arraste múltiplos arquivos de Nota Fiscal aqui</p>
+                <small>Suporta arquivos XML (NF-e) e PDF (DANFE) simultâneos</small>
+            </div>
+            <input type="file" id="fileFiles" accept=".xml,.pdf" multiple style="display:none" onchange="onFilesSelected(event)">
+
+            <div class="loading-bar" id="load-bar">
+                <div class="spinner"></div>
+                <span id="load-text">Processando arquivos...</span>
+            </div>
+            
+            <div id="import-alert" style="display:none;" class="aler    t"></div>
+
+            <div id="lote-container" style="display: none;padding: 0px 40px;">
+                <div class="totais-grid" id="lote-totais-cards"></div>
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                    <h3 style="font-size:14px; font-weight:600;" id="txt-lote-count">0 notas carregadas no lote</h3>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn success" onclick="salvarLoteCompleto()"><i class="ti ti-device-floppy"></i> Salvar Todas as Notas</button>
+                        <button class="btn danger" onclick="limparLoteAtual()"><i class="ti ti-trash"></i> Descartar Lote</button>
+                    </div>
+                </div>
+
+                <div class="lote-grid" id="lote-cards-root"></div>
+                <div id="lote-individual-root"></div>
+            </div>
+        </div>
+
+        <div class="panel" id="panel-historico">
+            <div class="totais-grid">
+                <div class="tot-card"><div class="tot-label">Total Notas Salvas</div><div class="tot-val" id="h-card-nfs">0</div></div>
+                <div class="tot-card"><div class="tot-label">Peso Total</div><div class="tot-val" id="h-card-peso">0,00 kg</div></div>
+                <div class="tot-card"><div class="tot-label">Total Caixas</div><div class="tot-val" id="h-card-cx">0 cx</div></div>
+                <div class="tot-card"><div class="tot-label">Valor Total Frete</div><div class="tot-val" id="h-card-frete">R$ 0,00</div></div>
+            </div>
+
+            <div class="filters-row">
+                <input type="text" id="filter-dest" placeholder="🔎 Pesquisar em tudo..." oninput="renderHistoricoFiltrado()">
+                <select id="filter-transp" onchange="renderHistoricoFiltrado()">
+                    <option value="">🚚 Todas as Transportadoras</option>
+                </select>
+                
+                <div style="display:flex; gap: 6px; align-items:center;">
+                    <span style="font-size:12px; font-weight:600; color:var(--color-text-sub);">De:</span>
+                    <input type="date" id="filter-date-start" onchange="renderHistoricoFiltrado()">
+                </div>
+                <div style="display:flex; gap: 6px; align-items:center;">
+                    <span style="font-size:12px; font-weight:600; color:var(--color-text-sub);">Até:</span>
+                    <input type="date" id="filter-date-end" onchange="renderHistoricoFiltrado()">
+                </div>
+
+                <button class="btn danger" onclick="excluirSelecionadosHistorico()"><i class="ti ti-trash"></i> Excluir Selecionados</button>
+                <button class="btn" onclick="copiarDadosExportacao()"><i class="ti ti-copy"></i> Copiar Dados</button>
+                <button class="btn" onclick="exportData('csv')"><i class="ti ti-file-type-csv"></i> Exportar CSV</button>
+                <button class="btn" onclick="exportData('xls')"><i class="ti ti-file-spreadsheet"></i> Exportar Excel</button>
+            </div>
+
+            <div class="table-wrap">
+                <table class="app-table">
+                    <thead>
+                        <tr>
+                            <th style="width:40px; text-align:center;"><input type="checkbox" id="chk-all-hist" onclick="toggleAllHist(this)"></th>
+                            <th style="cursor:pointer;user-select:none;" id="th-data">Data ↕</th>
+                            <th style="cursor:pointer;user-select:none;" id="th-nNF">Nº Nota ↕</th>
+                            <th style="cursor:pointer;user-select:none;" id="th-fonte">Tipo ↕</th>
+                            <th style="cursor:pointer;user-select:none;    text-align: center;" id="th-destinatario">Destinatário ↕</th>
+                            <th style="cursor:pointer;user-select:none;" id="th-pesoKg">Total Peso  ↕</th>
+                            <th style="cursor:pointer;user-select:none;" id="th-totalCx">Total Caixas ↕</th>
+                            <th style="cursor:pointer;user-select:none;" id="th-valorNF">Valor NF ↕</th>
+                            <th style="cursor:pointer;user-select:none;" id="th-transportadora">Transportadora ↕</th>
+                            <th style="width:130px; cursor:pointer;user-select:none;" id="th-frete">Valor Frete ↕</th>
+                            <th style="cursor:pointer;user-select:none;" id="th-freteUnitKg">R$ / Kg ↕</th>
+                            <th style="cursor:pointer;user-select:none;" id="th-freteUnitCx">R$ / Cx ↕</th>
+                            <th style="width:90px; text-align:center;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hist-table-tbody"></tbody>
+                </table>
+            </div>
+            <div id="hist-empty" class="empty-view" style="display:none;"><i class="ti ti-inbox"></i>Nenhum registro encontrado para os filtros informados.</div>
+        </div>
+
+        <div class="panel" id="panel-config">
+            <div class="config-card">
+                <div class="config-sect-title" onclick="toggleSection(this)">
+                    <span><i class="ti ti-truck"></i> Cadastro de Transportadoras e Exceções de Produtos</span>
+                    <i class="ti ti-chevron-up toggle-icon"></i>
+                </div>
+                <div class="config-body open">
+                    <div  style="margin-bottom: 20px;justify-content: center;display: flex;flex-direction: row;gap: 80px;">
+                        <div class="form-inline">
+                            <h5>CADASTRAR TRANSPORTADORA</h5>
+                            <label>Nome da Transportadora</label><input class="input-edit" type="text" id="cfg-t-nome" placeholder="Ex: TransLog">
+                            <label>Preço Padrão por Kg (R$)</label><input class="input-edit" type="number" id="cfg-t-pkg" step="0.01" placeholder="R$ 0.00/Kg">
+                            <label>Preço Padrão por Caixa (R$)</label><input class="input-edit" type="number" id="cfg-t-pcx" step="0.01" placeholder="R$ 0.00/Cx">
+                            <button class="btn sm primary" onclick="adicionarNovaTransportadora()"><i class="ti ti-plus"></i> Cadastrar Transportadora</button>
+                        </div>
+                        <div class="form-inline" >
+                            <h5>CADASTRAR EXCEÇÃO</h5>
+                            <select class="input-edit" id="transpExc"></select>
+                            <input type="text" id="exc-nome-geral" class="input-edit" placeholder="Nome exato do produto">
+                            <div>
+                                <select id="exc-tipo-geral" class="input-edit menor" >
+                                    <option value="kg">Por Kg</option>
+                                    <option value="cx">Por Cx</option>
+                                </select>
+                                <input type="number" id="exc-preco-geral" class="input-edit menor" placeholder="Preço (R$)" step="0.50">
+                            </div>
+                            <div>
+                                <input type="number" id="exc-pesomx-geral" class="input-edit menor" placeholder="Peso máx (kg)"step="10.00" >
+                                <input type="number" id="exc-exckg-geral" class="input-edit menor" placeholder="Peso exato (kg)"step="10.00" >
+                            </div>
+                            <button class="btn sm primary" onclick="adicionarExcecao()"><i class="ti ti-plus"></i>Cadastrar Exceção</button>
+                            
+                        </div>
+                    
+                    </div>
+                    <div id="cfg-list-transportadoras"></div>
+                </div>
+            
+        </div>
+
+            <div class="config-card">
+                <div class="config-sect-title" onclick="toggleSection(this)">
+                    <span><i class="ti ti-building"></i> Modalidades de Cobrança por Destinatário</span>
+                    <i class="ti ti-chevron-down toggle-icon"></i>
+                </div>
+                <div class="config-body ">
+                    <div style="margin-bottom:10px; font-size:12px; color:var(--color-text-sub);">Defina se um cliente específico calcula Frete sempre por Kg, por Caixa ou Misto. Caso não cadastrado, o sistema adota 'Por Kg' automaticamente.</div>
+                    <div class="form-inline">
+                       <!-- <label>CNPJ ou Razão Social do Destinatário</label>-->
+                        <input type="text" class="input-edit" id="cfg-d-chave" placeholder="Digite o CNPJ completo">
+                        
+                           <!-- <label>Modalidade Padrão</label>-->
+                            <select class="input-edit" id="cfg-d-modal">
+                                <option value="kg">Por Peso Bruto (Kg)</option>
+                                <option value="cx">Por Unidade de Caixa (Cx)</option>
+                                <option value="misto">Misto (Item a Item)</option>
+                            </select>
+                        
+                        
+                            <!-- <label>Transportadora Padrão</label> -->
+                            <select id="cfg-d-transp" class="input-edit"><option value="">Nenhuma</option></select>
+                        
+                        <button class="btn primary" onclick="adicionarRegraDestinatario()"><i class="ti ti-plus"></i> Vincular Regra</button>
+                    </div>
+                    <div id="cfg-list-destinatarios"></div>
+                </div>
+            </div>
+
+            <div class="config-card">
+                <div class="config-sect-title" onclick="toggleSection(this)">
+                    <span><i class="ti ti-table-export"></i> Configuração de Campos para Exportação e Cópia</span>
+                    <i class="ti ti-chevron-down toggle-icon"></i>
+                </div>
+                <div class="config-body">
+                    <div style="margin-bottom:12px; font-size:12px; color:var(--color-text-sub);">
+                        Ative ou desative cada campo, reordene arrastando <i class="ti ti-grip-vertical" style="font-size:13px;"></i> e personalize o cabeçalho que aparecerá no arquivo exportado.
+                    </div>
+                    <!-- Título geral da planilha -->
+                    <div style="margin-bottom:14px; padding:12px; background:var(--color-bg-main); border-radius:8px; border:1px solid var(--color-border-light);">
+                        <div style="font-size:11px; font-weight:700; color:var(--color-text-sub); margin-bottom:8px; text-transform:uppercase; letter-spacing:.5px;">Título da Planilha (linha acima dos cabeçalhos)</div>
+                        <div style="display:grid; grid-template-columns:1fr 100px 70px 70px; gap:8px; align-items:end;">
+                            <div>
+                                <label style="font-size:10px; color:var(--color-text-muted); display:block; margin-bottom:3px;">Texto</label>
+                                <input type="text" id="cfg-ex-title" class="input-edit" placeholder="Ex: Relatório de Fretes" style="width:100%;">
+                            </div>
+                            <div>
+                                <label style="font-size:10px; color:var(--color-text-muted); display:block; margin-bottom:3px;">Fundo</label>
+                                <input type="color" id="cfg-ex-title-bg" style="width:100%; height:28px; cursor:pointer; border-radius:4px; border:1px solid var(--color-border);">
+                            </div>
+                            <div>
+                                <label style="font-size:10px; color:var(--color-text-muted); display:block; margin-bottom:3px;">Fonte</label>
+                                <input type="color" id="cfg-ex-title-color" style="width:100%; height:28px; cursor:pointer; border-radius:4px; border:1px solid var(--color-border);">
+                            </div>
+                            <div>
+                                <label style="font-size:10px; color:var(--color-text-muted); display:block; margin-bottom:3px;">Tamanho</label>
+                                <select id="cfg-ex-title-font" class="input-edit" style="width:100%;">
+                                    <option value="12px">12px</option><option value="14px">14px</option>
+                                    <option value="16px" selected>16px</option><option value="18px">18px</option><option value="20px">20px</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Cabeçalho da lista de campos -->
+                    <div class="export-fields-header">
+                        <span style="width:16px;"></span>
+                        <span style="width:22px;"></span>
+                        <span style="flex: 0.25;">Campo</span>
+                        <span style="flex: 0.2;padding-left: 5%;">Cabeçalho Excel</span>
+                        <span style="text-align:center; line-height:1.2;">Cab.<br>Fundo</span>
+                        <span style="text-align:center; line-height:1.2;">Cab.<br>Fonte</span>
+                        <span style="text-align:center; line-height:1.2;">Dados<br>Fundo</span>
+                        <span style="text-align:center; line-height:1.2;">Borda</span>
+                    </div>
+                    <div class="export-fields-grid" id="cfg-export-fields-list" style="border:1px solid var(--color-border-light); border-top:none; border-radius:0 0 6px 6px; overflow:hidden; margin-bottom:12px;"></div>
+                    <div class="export-fields-actions">
+                        <button class="btn primary sm" onclick="salvarConfigExportacao()"><i class="ti ti-device-floppy"></i> Salvar Configuração de Exportação</button>
+                        <button class="btn sm" onclick="resetarConfigExportacao()"><i class="ti ti-refresh"></i> Restaurar Padrão</button>
+                        <span style="font-size:11px; color:var(--color-text-muted); margin-left:4px;">
+                            <span id="cfg-export-active-count">0</span> campo(s) ativo(s) na exportação
+                        </span>
+                    </div>
+                    <div style="margin-top:12px; background:var(--color-bg-main); border-radius:6px; padding:10px; border:1px solid var(--color-border-light);">
+                        <div style="font-size:11px; font-weight:600; color:var(--color-text-sub); margin-bottom:6px;"><i class="ti ti-eye"></i> Prévia da ordem dos cabeçalhos:</div>
+                        <div id="cfg-export-preview" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+                    </div>
+
+                    <!-- LAYOUT EXCEL -->
+                    <div style="margin-top:18px; border-top:2px solid var(--color-border); padding-top:14px;">
+                        <div style="font-size:13px; font-weight:700; color:var(--color-primary); margin-bottom:12px; display:flex; align-items:center; gap:6px;">
+                            <i class="ti ti-file-spreadsheet"></i> Layout de Exportação Excel
+                        </div>
+
+                        <!-- Cabeçalho -->
+                        <div style="font-size:11px; font-weight:600; color:var(--color-text-sub); margin-bottom:8px; text-transform:uppercase; letter-spacing:.5px;">Cabeçalho</div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px;">
+                            <div>
+                                <label style="font-size:11px; color:var(--color-text-muted); display:block; margin-bottom:4px;">Cor de Fundo</label>
+                                <input type="color" id="cfg-ex-bg" style="width:100%; height:32px; cursor:pointer; border-radius:4px; border:1px solid var(--color-border);">
+                            </div>
+                            <div>
+                                <label style="font-size:11px; color:var(--color-text-muted); display:block; margin-bottom:4px;">Cor da Fonte</label>
+                                <input type="color" id="cfg-ex-color" style="width:100%; height:32px; cursor:pointer; border-radius:4px; border:1px solid var(--color-border);">
+                            </div>
+                            <div>
+                                <label style="font-size:11px; color:var(--color-text-muted); display:block; margin-bottom:4px;">Tamanho da Fonte</label>
+                                <select id="cfg-ex-font" class="input-edit" style="width:100%;">
+                                    <option value="10px">10px</option>
+                                    <option value="11px">11px</option>
+                                    <option value="12px">12px</option>
+                                    <option value="14px">14px</option>
+                                    <option value="16px">16px</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Dados -->
+                        <div style="font-size:11px; font-weight:600; color:var(--color-text-sub); margin-bottom:8px; text-transform:uppercase; letter-spacing:.5px;">Dados</div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+                            <div>
+                                <label style="font-size:11px; color:var(--color-text-muted); display:block; margin-bottom:4px;">Tamanho da Fonte dos Dados</label>
+                                <select id="cfg-ex-data-font" class="input-edit" style="width:100%;">
+                                    <option value="10px">10px</option>
+                                    <option value="11px">11px</option>
+                                    <option value="12px">12px</option>
+                                    <option value="14px">14px</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size:11px; color:var(--color-text-muted); display:block; margin-bottom:4px;">Alinhamento dos Dados</label>
+                                <select id="cfg-ex-align" class="input-edit" style="width:100%;">
+                                    <option value="left">Esquerda</option>
+                                    <option value="center">Centro</option>
+                                    <option value="right">Direita</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Somatório -->
+                        <div style="font-size:11px; font-weight:600; color:var(--color-text-sub); margin-bottom:8px; text-transform:uppercase; letter-spacing:.5px;">Somatório</div>
+                        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
+                            <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                                <input type="checkbox" id="cfg-ex-totals" style="width:15px; height:15px;">
+                                Exibir linha de <b>Totais</b> ao final da planilha
+                            </label>
+                            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+                                <div>
+                                    <label style="font-size:11px; color:var(--color-text-muted); display:block; margin-bottom:4px;">Cor de Fundo do Somatório</label>
+                                    <input type="color" id="cfg-ex-total-bg" style="width:100%; height:32px; cursor:pointer; border-radius:4px; border:1px solid var(--color-border);">
+                                </div>
+                                <div>
+                                    <label style="font-size:11px; color:var(--color-text-muted); display:block; margin-bottom:4px;">Cor da Fonte do Somatório</label>
+                                    <input type="color" id="cfg-ex-total-color" style="width:100%; height:32px; cursor:pointer; border-radius:4px; border:1px solid var(--color-border);">
+                                </div>
+                                <div>
+                                    <label style="font-size:11px; color:var(--color-text-muted); display:block; margin-bottom:4px;">Tamanho da Fonte do Somatório</label>
+                                    <select id="cfg-ex-total-font" class="input-edit" style="width:100%;">
+                                        <option value="10px">10px</option>
+                                        <option value="11px">11px</option>
+                                        <option value="12px">12px</option>
+                                        <option value="14px">14px</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="btn primary sm" onclick="salvarConfigExcel()"><i class="ti ti-check"></i> Salvar Layout Excel</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="config-card">
+                <div class="config-sect-title" onclick="toggleSection(this)">
+                    <span><i class="ti ti-separator"></i> Regras de Captura de Dados na Descrição (Avançado)</span>
+                    <i class="ti ti-chevron-down toggle-icon"></i>
+                </div>
+                <div class="config-body">
+                    <div style="margin-bottom:12px; font-size:12px; color:var(--color-text-sub);">
+                        Informe em qual posição (ordem dos blocos separados por '|') cada informação crucial se encontra na descrição do produto.
+                    </div>
+                    <div class="cfg-grid-row">
+                        <label>Campo 1 (Nome do Produto): Posição </label>
+                        <input type="number" id="cfg-p-nome" min="1" value="1">
+                    </div>
+                    <div class="cfg-grid-row">
+                        <label>Campo 2 (Quantidade de Caixas): Posição </label>
+                        <input type="number" id="cfg-p-qtdcx" min="1" value="2">
+                    </div>
+                    <div class="cfg-grid-row">
+                        <label>Campo 3 (Peso Padrão por Caixa): Posição </label>
+                        <input type="number" id="cfg-p-pesocx" min="1" value="5">
+                    </div>
+                    <div style="margin-top:12px; font-size:11px; color:var(--color-text-muted); background:var(--color-bg-main); padding:8px; border-radius:4px;">
+                        <strong>Exemplo Configurado:</strong> BANANA NANICA 1A | 5,0000 | MDG | 052026 | 20,0000 <br>
+                        (Posição 1: Nome, Posição 2: 5 caixas, Posição 5: 20kg por caixa)
+                    </div>
+                    <button class="btn primary sm" style="margin-top:12px;" onclick="salvarRegrasConfig()"><i class="ti ti-check"></i> Salvar Regras de Leitura</button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<div id="menu-float-transp" style="display:none; position:absolute; z-index:9999; background:#fff; border:1px solid var(--color-border); box-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1); border-radius:8px; padding:12px; width:280px;">
+    <h4 style="font-size:12px; font-weight:700; margin-bottom:10px; color:var(--color-primary); border-bottom:1px solid var(--color-border-light); padding-bottom:6px;">Preferências de transportadora x cnpj das notas importadas</h4>
+    <div style="display:flex; flex-direction:column; gap:6px;">
+        <button class="btn sm" style="justify-content:flex-start;" onclick="execFloatTransp('vincular')"><i class="ti ti-link"></i> Vincular todos os CNPJ</button>
+        <button class="btn sm" style="justify-content:flex-start;" onclick="execFloatTransp('todos')"><i class="ti ti-copy"></i> Aplicar dessa vez (Lote)</button>
+        <button class="btn sm" style="justify-content:flex-start;" onclick="execFloatTransp('apenas')"><i class="ti ti-file-check"></i> Apenas esta nota</button>
+    </div>
+</div>
+
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    var ST = {
+        transportadoras: JSON.parse(localStorage.getItem('fn_v4_transp') || '[]'),
+        destinatarios: JSON.parse(localStorage.getItem('fn_v4_dest') || '[]'),
+        registros: JSON.parse(localStorage.getItem('fn_v4_regs') || '[]'),
+        rules: JSON.parse(localStorage.getItem('fn_v4_rules') || '{"nome":1,"qtdcx":2,"pesocx":5}'),
+        lote: [],
+        idNotaSelecionadaLote: null
+    };
+
+    var excelConfig = JSON.parse(localStorage.getItem('fn_v4_excel_cfg') || '{"headerBg":"#1e40af","headerColor":"#ffffff","headerFontSize":"12px","dataFontSize":"11px","dataAlign":"left","showTotals":true,"totalBg":"#f1f5f9","totalColor":"#1e293b","totalFontSize":"11px"}');
+    
+    // VARIÁVEIS DE CONTEXTO DO MENU FLUTUANTE
+    var menuFloatCtx = { idNota: null, idTransp: null };
+
+    var EXPORT_FIELDS_DEFAULT = [
+        { key: 'data',          label: 'Data',              defaultHeader: 'Data',            defaultAtivo: true  },
+        { key: 'nNF',           label: 'Número da NF',      defaultHeader: 'Numero NF',       defaultAtivo: true  },
+        { key: 'totalCx',       label: 'Total Caixas',      defaultHeader: 'Total Cx',        defaultAtivo: true  },
+        { key: 'pesoKg',        label: 'Peso Total (Kg)',   defaultHeader: 'Peso Kg',         defaultAtivo: true  },
+        { key: 'frete',         label: 'Frete Total (R$)',  defaultHeader: 'Frete Total R$',  defaultAtivo: true  },
+        { key: 'freteUnitKg',   label: 'Frete por Kg (R$)', defaultHeader: 'Frete por Kg',   defaultAtivo: true  },
+        { key: 'freteUnitCx',   label: 'Frete por Cx (R$)', defaultHeader: 'Frete por Caixa',defaultAtivo: true  },
+        { key: 'fonte',         label: 'Tipo (XML/PDF)',     defaultHeader: 'Fonte',          defaultAtivo: false },
+        { key: 'emitente',      label: 'Emitente',          defaultHeader: 'Emitente',        defaultAtivo: false },
+        { key: 'destinatario',  label: 'Destinatário',      defaultHeader: 'Destinatario',    defaultAtivo: false },
+        { key: 'destCNPJ',      label: 'CNPJ Destinatário', defaultHeader: 'CNPJ',            defaultAtivo: false },
+        { key: 'valorNF',       label: 'Valor da NF (R$)',  defaultHeader: 'Valor NF',        defaultAtivo: false },
+        { key: 'transportadora',label: 'Transportadora',    defaultHeader: 'Transportadora',  defaultAtivo: false }
+    ];
+
+    function carregarConfigExportacao() {
+        var salvo = localStorage.getItem('fn_v4_export_fields');
+        if (salvo) {
+            try {
+                var parsed = JSON.parse(salvo);
+                var keysExistentes = parsed.map(function(f){ return f.key; });
+                EXPORT_FIELDS_DEFAULT.forEach(function(def) {
+                    if (!keysExistentes.includes(def.key)) {
+                        parsed.push({ key: def.key, ativo: def.defaultAtivo, header: def.defaultHeader, headerBg: '', headerColor: '', dataBg: '', border: true });
+                    }
+                });
+                // Garante novos campos em entradas antigas
+                parsed.forEach(function(f) {
+                    if (f.headerBg === undefined) f.headerBg = '';
+                    if (f.headerColor === undefined) f.headerColor = '';
+                    if (f.dataBg === undefined) f.dataBg = '';
+                    if (f.border === undefined) f.border = true;
+                });
+                return parsed;
+            } catch(e) {}
+        }
+        return EXPORT_FIELDS_DEFAULT.map(function(f) {
+            return { key: f.key, ativo: f.defaultAtivo, header: f.defaultHeader, headerBg: '', headerColor: '', dataBg: '', border: true };
+        });
+    }
+
+    var exportFieldsConfig = carregarConfigExportacao();
+
+    var histSortCol = 'data';
+    var histSortAsc = false;
+
+    var _pressTimer = null;
+    var _copiouAgora = false;
+
+    // EVENTO GLOBAL PARA FECHAR MENU FLUTUANTE SE CLICAR FORA
+    document.addEventListener('click', function(e) {
+        var menu = document.getElementById('menu-float-transp');
+        if(menu && menu.style.display === 'block' && !menu.contains(e.target) && !e.target.classList.contains('select-transp-lote')) {
+            menu.style.display = 'none';
+            renderLoteCompleto(); // Reseta visualmente a seleção do select caso tenha cancelado
+        }
+    });
+
+    function toggleSection(element) {
+        var body = element.nextElementSibling;
+        var icon = element.querySelector('.toggle-icon');
+        const openAnterior = document.querySelector('.config-body.open');
+
+        if (openAnterior) {
+            openAnterior.classList.remove('open');
+            openAnterior.previousElementSibling.querySelector('.toggle-icon').classList.remove('ti-chevron-up');
+            openAnterior.previousElementSibling.querySelector('.toggle-icon').classList.add('ti-chevron-down'); 
+        }
+        if(body !== openAnterior){
+            body.classList.add('open');
+            icon.classList.remove('ti-chevron-down');
+            icon.classList.add('ti-chevron-up');
+            element.closest('.config-card').previousElementSibling?.scrollIntoView({ behavior: "auto", block: "start", inline: "center" });
+        }
+    }
+
+    function mostrarToast(msg) {
+        var div = document.createElement('div');
+        div.textContent = msg;
+        div.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#1e40af;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.2);z-index:9999;transition:opacity 0.4s;';
+        document.body.appendChild(div);
+        setTimeout(function(){ div.style.opacity='0'; }, 1600);
+        setTimeout(function(){ div.remove(); }, 2000);
+    }
+
+    function mostrarToastAviso(msg) {
+        var existing = document.getElementById('toast-aviso-unico');
+        if (existing) existing.remove();
+        var div = document.createElement('div');
+        div.id = 'toast-aviso-unico';
+        div.innerHTML = '<span style="font-size:16px;">⚠️</span><span>' + msg + '</span>';
+        div.style.cssText = 'position:fixed;bottom:24px;right:24px;display:flex;align-items:center;gap:10px;background:#fff;color:#92400e;border:1.5px solid #fbbf24;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,0.13);z-index:9999;transition:opacity 0.4s;';
+        document.body.appendChild(div);
+        setTimeout(function(){ div.style.opacity='0'; }, 2400);
+        setTimeout(function(){ div.remove(); }, 2900);
+    }
+
+      // ── MODAL DE CONFIRMAÇÃO ──────────────────────────────────────────────────
+    function abrirModal(titulo, mensagem, fnConfirmar) {
+        document.getElementById('modal-confirm-title').textContent = titulo;
+        document.getElementById('modal-confirm-msg').textContent = mensagem;
+        var overlay = document.getElementById('modal-confirm-overlay');
+        var btnConfirm = document.getElementById('modal-confirm-btn');
+        // Remove listener anterior para não acumular
+        var novoBtn = btnConfirm.cloneNode(true);
+        btnConfirm.parentNode.replaceChild(novoBtn, btnConfirm);
+        novoBtn.addEventListener('click', function() {
+            fecharModal();
+            fnConfirmar();
+        });
+        overlay.classList.add('aberto');
+    }
+
+    function fecharModal() { document.getElementById('modal-confirm-overlay').classList.remove('aberto'); }
+
+    // Fechar modal clicando fora da caixa
+    document.getElementById('modal-confirm-overlay').addEventListener('click', function(e) {
+        if (e.target === this) fecharModal();
+    });
+
+    function copiarColuna(col) {
+        var valores = ST.registros.map(function(r){ return r[col] !== undefined ? r[col] : ''; });
+        var texto = valores.join('\n');
+        navigator.clipboard.writeText(texto).then(function(){
+            mostrarToast('✓ Coluna copiada (' + valores.length + ' valores)');
+        });
+    }
+
+    function persistirDados() {
+        localStorage.setItem('fn_v4_transp', JSON.stringify(ST.transportadoras));
+        localStorage.setItem('fn_v4_dest', JSON.stringify(ST.destinatarios));
+        localStorage.setItem('fn_v4_regs', JSON.stringify(ST.registros));
+        localStorage.setItem('fn_v4_rules', JSON.stringify(ST.rules));
+    }
+
+    function formatarMoeda(v) {
+        return 'R$ ' + parseFloat(v || 0).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+
+    function formatarPeso(v) {
+        var num = parseFloat(v || 0);
+        var str = num.toFixed(3); 
+        str = str.replace(/\.?0+$/, ''); 
+        return str.replace('.', ',');
+    }
+
+    function formatarDoc(v) {
+        if (!v) return '';
+        v = String(v).replace(/\D/g, "");
+        if (v.length === 14) return v.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
+        if (v.length === 11) return v.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+        return v;
+    }
+
+    function parseNumeroBR(val) {
+        if (!val) return 0;
+        if (typeof val === 'number') return val;
+        var s = String(val).trim();
+        s = s.replace(/\s/g, '');
+        if (s.includes(',') && s.includes('.')) {
+            if (s.indexOf('.') < s.indexOf(',')) { s = s.replace(/\./g, ''); s = s.replace(',', '.'); }
+            else { s = s.replace(/,/g, ''); }
+        } else if (s.includes(',')) {
+            s = s.replace(',', '.');
+        }
+        return parseFloat(s) || 0;
+    }
+    
+    function parseBRDate(str) {
+        if (!str) return '0000-00-00';
+        var parts = str.split('/');
+        if (parts.length === 3) return parts[2] + '-' + parts[1] + '-' + parts[0];
+        return str;
+    }
+
+    function exibirAlertaGlobal(idElem, msg, tipo) {
+        var el = document.getElementById(idElem);
+        if(!el) return;
+        el.style.display = 'flex';
+        el.className = 'alert alert-' + (tipo || 'info');
+        var icon = 'ti-info-circle';
+        if(tipo === 'success') icon = 'ti-circle-check';
+        if(tipo === 'warn') icon = 'ti-alert-triangle';
+        if(tipo === 'error') icon = 'ti-alert-octagon';
+        el.innerHTML = '<i class="ti ' + icon + '"></i><span>' + msg + '</span>';
+    }
+
+    function switchTab(tabId, event) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        if(event) event.target.closest('.tab').classList.add('active');
+        document.getElementById('panel-' + tabId).classList.add('active');
+        if (tabId === 'historico') { renderHistoricoCompleto(); }
+        if (tabId === 'config') { renderConfiguracoes(); }
+    }
+
+    function toggleVisibilidadeCarregamento(visivel, msg) {
+        var bar = document.getElementById('load-bar');
+        bar.style.display = visivel ? 'flex' : 'none';
+        if(msg) document.getElementById('load-text').textContent = msg;
+    }
+
+    function salvarRegrasConfig() {
+        ST.rules = {
+            nome: parseInt(document.getElementById('cfg-p-nome').value) || 1,
+            qtdcx: parseInt(document.getElementById('cfg-p-qtdcx').value) || 2,
+            pesocx: parseInt(document.getElementById('cfg-p-pesocx').value) || 5
+        };
+        persistirDados();
+        mostrarToast('Regras de extração atualizadas com sucesso!');
+    }
+
+    function salvarConfigExcel() {
+        excelConfig = {
+            headerBg:      document.getElementById('cfg-ex-bg').value,
+            headerColor:   document.getElementById('cfg-ex-color').value,
+            headerFontSize:document.getElementById('cfg-ex-font').value,
+            dataFontSize:  document.getElementById('cfg-ex-data-font').value,
+            dataAlign:     document.getElementById('cfg-ex-align').value,
+            showTotals:    document.getElementById('cfg-ex-totals').checked,
+            totalBg:       document.getElementById('cfg-ex-total-bg').value,
+            totalColor:    document.getElementById('cfg-ex-total-color').value,
+            totalFontSize: document.getElementById('cfg-ex-total-font').value,
+            titleText:     document.getElementById('cfg-ex-title').value,
+            titleBg:       document.getElementById('cfg-ex-title-bg').value,
+            titleColor:    document.getElementById('cfg-ex-title-color').value,
+            titleFontSize: document.getElementById('cfg-ex-title-font').value
+        };
+        localStorage.setItem('fn_v4_excel_cfg', JSON.stringify(excelConfig));
+        mostrarToast('Layout do Excel salvo com sucesso!');
+    }
+
+    async function onFilesSelected(e) {
+        var files = Array.from(e.target.files);
+        if(!files.length) return;
+        
+        document.getElementById('import-alert').style.display = 'none';
+        toggleVisibilidadeCarregamento(true, "Iniciando processamento de " + files.length + " arquivo(s)...");
+
+        for (var i = 0; i < files.length; i++) {
+            toggleVisibilidadeCarregamento(true, "Processando (" + (i + 1) + "/" + files.length + "): " + files[i].name);
+            await processarArquivoIndividual(files[i]);
+        }
+
+        toggleVisibilidadeCarregamento(false);
+        if(ST.lote.length > 0) {
+            ST.idNotaSelecionadaLote = ST.lote[0].id;
+        }
+        renderLoteCompleto();
+        document.getElementById('fileFiles').value = '';
+    }
+
+    function processarArquivoIndividual(file) {
+        return new Promise(function(resolve) {
+            var extensao = file.name.toLowerCase();
+            if (extensao.endsWith('.xml')) {
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    executarParseXML(ev.target.result, file.name);
+                    resolve();
+                };
+                reader.readAsText(file, 'UTF-8');
+            } else if (extensao.endsWith('.pdf')) {
+                var reader2 = new FileReader();
+                reader2.onload = function(ev) {
+                    executarParsePDF(ev.target.result, file.name).then(resolve);
+                };
+                reader2.readAsArrayBuffer(file);
+            } else {
+                resolve();
+            }
+        });
+    
+    }
+
+    function executarParseXML(conteudoTxt, nomeArquivo) {
+        try {
+            var parser = new DOMParser();
+            var xmlDoc = parser.parseFromString(conteudoTxt, 'text/xml');
+            
+            function buscarTag(pai, tag) {
+                var elementos = pai.getElementsByTagNameNS('http://www.portalfiscal.inf.br/nfe', tag);
+                if(!elementos.length) elementos = pai.getElementsByTagName(tag);
+                return elementos.length ? elementos[0].textContent : '';
+            }
+
+            function buscarListaTags(tag) {
+                var elementos = xmlDoc.getElementsByTagNameNS('http://www.portalfiscal.inf.br/nfe', tag);
+                if(!elementos.length) elementos = xmlDoc.getElementsByTagName(tag);
+                return Array.from(elementos);
+            }
+
+            var nNF = buscarTag(xmlDoc, 'nNF') || '—';
+            var dhEmi = buscarTag(xmlDoc, 'dhEmi') || buscarTag(xmlDoc, 'dEmi') || '';
+            var dataFormatada = dhEmi ? dhEmi.slice(0, 10).split('-').reverse().join('/') : '—';
+            
+            var emitBlocos = buscarListaTags('emit');
+            var emitenteNome = emitBlocos.length ? buscarTag(emitBlocos[0], 'xNome') : '—';
+            
+            var destBlocos = buscarListaTags('dest');
+            var destNome = destBlocos.length ? buscarTag(destBlocos[0], 'xNome') : '—';
+            var destCNPJ = destBlocos.length ? (buscarTag(destBlocos[0], 'CNPJ') || buscarTag(destBlocos[0], 'CPF')) : '';
+            
+            destCNPJ = formatarDoc(destCNPJ);
+
+            var pesoBrutoTotalNF = 0;
+            buscarListaTags('vol').forEach(function(v) {
+                var p = v.getElementsByTagNameNS('http://www.portalfiscal.inf.br/nfe', 'pesoL');
+                if(!p.length) p = v.getElementsByTagName('pesoL');
+                if(!p.length) p = v.getElementsByTagNameNS('http://www.portalfiscal.inf.br/nfe', 'pesoB');
+                if(!p.length) p = v.getElementsByTagName('pesoB');
+                if(p.length) pesoBrutoTotalNF += parseFloat(p[0].textContent) || 0;
+            });
+
+            var valorTotalNF = 0;
+            var icmsTot = buscarListaTags('ICMSTot');
+            if(icmsTot.length) valorTotalNF = parseFloat(buscarTag(icmsTot[0], 'vNF')) || 0;
+
+            var itensNota = [];
+            buscarListaTags('det').forEach(function(detElement) {
+                var prodElement = detElement.getElementsByTagNameNS('http://www.portalfiscal.inf.br/nfe', 'prod')[0] || detElement.getElementsByTagName('prod')[0];
+                if(!prodElement) return;
+
+                var xProd = buscarTag(prodElement, 'xProd') || '—';
+                var infAdProdEl = detElement.getElementsByTagNameNS('http://www.portalfiscal.inf.br/nfe', 'infAdProd');
+                if (!infAdProdEl.length) infAdProdEl = detElement.getElementsByTagName('infAdProd');
+                var infAdProd = infAdProdEl.length ? infAdProdEl[0].textContent : '';
+
+                var qtdcxXml = 0, pesocxXml = 0;
+                if (infAdProd && infAdProd.includes('|')) {
+                    var partesAd = infAdProd.split('|').map(function(p){ return p.trim(); });
+                    qtdcxXml = Math.round(parseNumeroBR(partesAd[0] || '0'));
+                    if (partesAd.length >= 5) {
+                        pesocxXml = parseNumeroBR(partesAd[4]);
+                    } else if (partesAd.length >= 4) {
+                        pesocxXml = parseNumeroBR(partesAd[3]);
+                    }
+                }
+
+                var qCom = parseFloat(buscarTag(prodElement, 'qCom')) || 0;
+                var uCom = buscarTag(prodElement, 'uCom') || 'UN';
+                var vUnCom = parseFloat(buscarTag(prodElement, 'vUnCom')) || 0;
+                var vProd = parseFloat(buscarTag(prodElement, 'vProd')) || 0;
+
+                itensNota.push({
+                    descRaw: infAdProd || xProd,
+                    nome: xProd.trim(),
+                    qtdcx: qtdcxXml,
+                    pesocx: pesocxXml,
+                    qtdOriginal: qCom,
+                    unidadeMedida: uCom,
+                    vUnitario: vUnCom,
+                    vTotalItem: vProd,
+                    tipoCalculoItem: 'auto',
+                    precoManual: null 
+                });
+            });
+
+            var notaImportada = {
+                id: 'nf_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                nNF: nNF,
+                dataStr: dataFormatada,
+                emitNome: emitenteNome,
+                destNome: destNome,
+                destCNPJ: destCNPJ,
+                pesoB: pesoBrutoTotalNF,
+                itens: itensNota,
+                vNF: valorTotalNF,
+                arquivo: nomeArquivo,
+                fonte: 'XML',
+                transpId: obterTranspIdPorCliente(destCNPJ, destNome),
+                modalidadeCobranca: obterModalidadeCliente(destCNPJ || destNome),
+                freteCalculado: 0,
+                transpNome: ''
+            };
+            ST.lote.push(notaImportada);
+            setTimeout(function(){ processarCalculosDeFreteNota(notaImportada.id); },0);
+        } catch(err) {}
+    }
+
+    async function executarParsePDF(arrayBuffer, nomeArquivo) {
+        try {
+            var documentoPdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            var todasLinhas  = [];
+
+            for (var pg = 1; pg <= documentoPdf.numPages; pg++) {
+                var pagina      = await documentoPdf.getPage(pg);
+                var content     = await pagina.getTextContent();
+                var grupos = {};
+                content.items.forEach(function(item) {
+                    var y = Math.round(item.transform[5]);
+                    if (!grupos[y]) grupos[y] = [];
+                    grupos[y].push(item);
+                });
+                var ys = Object.keys(grupos).map(Number).sort(function(a,b){ return b-a; });
+                ys.forEach(function(y) {
+                    var txtLinha = grupos[y]
+                        .sort(function(a,b){ return a.transform[4]-b.transform[4]; })
+                        .map(function(i){ return i.str; })
+                        .join(' ')
+                        .replace(/\s+/g,' ')
+                        .trim();
+                    if (txtLinha) todasLinhas.push(txtLinha);
+                });
+            }
+
+            var processado = extrairDadosDeTextoDanfe(todasLinhas, nomeArquivo);
+            ST.lote.push(processado);
+            setTimeout(function(){ processarCalculosDeFreteNota(processado.id); }, 0);
+        } catch(e) { console.error('Erro PDF:', e); }
+    }
+
+    function extrairDadosDeTextoDanfe(linhas, nomeArquivo) {
+        if (typeof linhas === 'string') { linhas = linhas.split('\n'); }
+
+        var textoFlat = linhas.join(' ');
+
+        var nNF = '—';
+        var mNF = textoFlat.match(/N\.\s*([\d][\d\.]+)/);
+        if (mNF) nNF = mNF[1].replace(/\./g, '');
+
+        var dataStr = '—';
+        for (var li = 0; li < linhas.length; li++) {
+            var mData = linhas[li].match(/Dt\.Emiss[aã]o:\s*(\d{2}-\d{2}-\d{4})/i);
+            if (mData) { dataStr = mData[1].replace(/-/g, '/'); break; }
+        }
+        if (dataStr === '—') {
+            var mD = textoFlat.match(/(\d{2}-\d{2}-\d{4})/);
+            if (mD) dataStr = mD[1].replace(/-/g, '/');
+        }
+
+        var destNome = '—', destCNPJ = '';
+        for (var li = 0; li < linhas.length; li++) {
+            if (/NOME\s*\/\s*RAZ[ÃA]O SOCIAL/i.test(linhas[li]) && /CNPJ\/CPF/i.test(linhas[li])) {
+                var proxLinha = linhas[li + 1] || '';
+                var mDest = proxLinha.match(/^(.+?)\s+\d{4,6}\s+(\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2})\s+/);
+                if (mDest) {
+                    destNome = mDest[1].trim();
+                    destCNPJ = mDest[2];
+                } else {
+                    var mDest2 = proxLinha.match(/^(.+?)\s+(\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2})/);
+                    if (mDest2) { destNome = mDest2[1].trim(); destCNPJ = mDest2[2]; }
+                }
+                break;
+            }
+        }
+        if (!destCNPJ) {
+            var cnpjs = textoFlat.match(/(\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2})/g) || [];
+            if (cnpjs.length >= 2) destCNPJ = cnpjs[1];
+            else if (cnpjs.length === 1) destCNPJ = cnpjs[0];
+        }
+
+        var emitNome = '—';
+        for (var li = 0; li < linhas.length; li++) {
+            if (/^SAMBA /i.test(linhas[li]) || /FRUTAS TROPICAIS/i.test(linhas[li])) {
+                emitNome = linhas[li].trim(); break;
+            }
+        }
+
+        var pesoB = 0, pesoL = 0;
+        for (var li = 0; li < linhas.length; li++) {
+            if (/PESO BRUTO/i.test(linhas[li]) && /PESO L[ÍI]QUIDO/i.test(linhas[li])) {
+                var lPeso = (linhas[li + 1] || '');
+                var todosKg = lPeso.match(/([\d\.]+,[\d]+)\s*Kg/gi) || [];
+                if (todosKg.length >= 2) {
+                    pesoB = parseNumeroBR(todosKg[0].replace(/Kg/i,'').trim());
+                    pesoL = parseNumeroBR(todosKg[1].replace(/Kg/i,'').trim());
+                } else if (todosKg.length === 1) {
+                    pesoB = parseNumeroBR(todosKg[0].replace(/Kg/i,'').trim());
+                }
+                break;
+            }
+        }
+        var pesoPadrao = pesoL > 0 ? pesoL : pesoB;
+
+        var vNF = 0;
+        for (var li = 0; li < linhas.length; li++) {
+            if (/VALOR TOTAL DA NOTA/i.test(linhas[li])) {
+                var lVals = (linhas[li + 1] || '');
+                var nums = lVals.match(/[\d\.]+,[\d]{2}/g) || [];
+                if (nums.length) { vNF = parseNumeroBR(nums[nums.length - 1]); break; }
+                var mInline = linhas[li].match(/([\d\.]+,[\d]{2})\s*$/);
+                if (mInline) { vNF = parseNumeroBR(mInline[1]); break; }
+            }
+        }
+
+        var idxInicio = -1, idxFim = linhas.length;
+        for (var li = 0; li < linhas.length; li++) {
+            if (/DADOS DOS PRODUTOS/i.test(linhas[li])) { idxInicio = li + 1; }
+            if (idxInicio > 0 && /C[ÁA]LCULO DO ISSQN/i.test(linhas[li])) { idxFim = li; break; }
+        }
+        if (idxInicio >= 0 && /C[ÓO]D\.?\s*PROD/i.test(linhas[idxInicio])) idxInicio++;
+
+        var RE_DADOS = /(\d{1,6})\s+(\d{8})\s+(\d{3})\s+(\d{4})\s+(KG|UN|CX|PC|CT|BJ)\s+([\d,\.]+)\s+([\d,\.]+)/i;
+        var RE_DADOS_PARCIAL = /(\d{8})\s+(\d{3})\s+(\d{4})\s+(KG|UN|CX|PC|CT|BJ)\s+([\d,\.]+)\s+([\d,\.]+)/i;
+        var RE_INLINE = /^(\d{1,6})\s+([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ].+?\|.+?)\s+(\d{8})\s+(\d{3})\s+(\d{4})\s+(KG|UN|CX|PC|CT)\s+([\d,\.]+)\s+([\d,\.]+)/i;
+        var RE_LOTE3  = /^(\d{6})(?:\s*\|\s*([\d,\.]+))?/;
+        var RE_FEIRNOVA = /^(\d{1,3})\s+(?:\d{8})\s+\d{3}\s+\d{4}\s+(KG|UN|CX|PC|CT)\s+([\d,\.]+)\s+([\d,\.]+)[\s\d,\.]+([A-Z\u00C0-\u00FF][^|]+?)\|\s*([\d,\.]+)\s*\|\s*$/i;
+
+        var itens = [];
+        var li = idxInicio;
+        while (li >= 0 && li < idxFim) {
+            var linha = linhas[li].trim();
+
+            var mbFN = RE_FEIRNOVA.exec(linha);
+            if (mbFN) {
+                var un    = mbFN[2].toUpperCase(); 
+                var qtdKg = parseNumeroBR(mbFN[3]); 
+                var vUnit = parseNumeroBR(mbFN[4]); 
+                var nome  = mbFN[5].trim();          
+                var qtdcx = parseNumeroBR(mbFN[6]); 
+                var linhaB = (linhas[li + 1] || '').trim();
+                var linhaC = (linhas[li + 2] || '').trim();
+                var linhaD = (linhas[li + 3] || '').trim();
+                var pesocx = 0;
+                var segB = linhaB.split('|').map(function(s){ return s.trim(); });
+                for (var sb = segB.length - 1; sb >= 0; sb--) {
+                    var val = segB[sb].replace(/\s+[\d,\.]+\s*$/, '').trim();
+                    if (/^[\d,\.]+$/.test(val) && parseNumeroBR(val) > 0) {
+                        pesocx = parseNumeroBR(val); break;
+                    }
+                }
+                if (pesocx === 0 && un === 'KG') pesocx = qtdKg;
+                if (nome && nome.length >= 3) {
+                    itens.push({ descRaw: nome, nome: nome, qtdcx: qtdcx, pesocx: pesocx,
+                        qtdOriginal: qtdKg, unidadeMedida: un, vUnitario: vUnit,
+                        vTotalItem: qtdKg * vUnit, tipoCalculoItem: 'auto', precoManual: null });
+                }
+                li += 2; continue;
+            }
+
+            var mb1 = RE_INLINE.exec(linha);
+            if (mb1) {
+                var descRaw = mb1[2].trim();
+                var un      = mb1[6].toUpperCase();
+                var qtdKg   = parseNumeroBR(mb1[7]);
+                var vUnit   = parseNumeroBR(mb1[8]);
+                var partes  = descRaw.split('|').map(function(p){ return p.trim(); });
+                var nome    = partes[0];
+                var qtdcx   = parseNumeroBR(partes[1] || '0');
+                var pesocx  = parseNumeroBR(partes[4] || '0');
+                if (qtdcx === 0 && un === 'KG') { pesocx = qtdKg; }
+                if (nome && nome.length >= 3 && !/BOL=|Venc=|OUT=/i.test(nome)) {
+                    itens.push({ descRaw:descRaw, nome:nome, qtdcx:qtdcx, pesocx:pesocx,
+                        qtdOriginal:qtdKg, unidadeMedida:un, vUnitario:vUnit,
+                        vTotalItem:qtdKg*vUnit, tipoCalculoItem:'auto', precoManual:null });
+                }
+                li++; continue;
+            }
+
+            var temPipe  = linha.indexOf('|') >= 0;
+            var iniciaMaiusc = /^[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ]/.test(linha);
+            var naoEDados = !RE_DADOS.test(linha);
+            if (temPipe && iniciaMaiusc && naoEDados && !/BOL=|Venc=|OUT=/i.test(linha)) {
+                var descLinha1 = linha;
+                var linhaDados = (linhas[li + 1] || '').trim();
+                var md = RE_DADOS.exec(linhaDados);
+                var mdParcial = !md ? RE_DADOS_PARCIAL.exec(linhaDados) : null;
+                if (md || mdParcial) {
+                    var _m     = md || mdParcial;
+                    var _off   = md ? 0 : -1; // parcial: grupos deslocados (sem cod_prod)
+                    var un     = _m[md ? 5 : 4].toUpperCase();
+                    var qtdKg  = parseNumeroBR(_m[md ? 6 : 5]);
+                    var vUnit  = parseNumeroBR(_m[md ? 7 : 6]);
+                    var linhaLote = (linhas[li + 2] || '').trim();
+                    var descCompleta = descLinha1.replace(/\s*Lote:\s*$/i, '');
+                    var pesocx = 0;
+                    var qtdcx  = 0;
+                    var li_avancar = 2; // default: pula desc + dados
+
+                    // Padrão 1: RE_LOTE3 — começa com 6 dígitos: "062026 | 20,0000"
+                    var temLote3 = RE_LOTE3.test(linhaLote);
+                    // Padrão 2: ^Lote: — "Lote: 062026 | 18,0000"
+                    var temLoteDireto = /^Lote:/i.test(linhaLote);
+                    // Padrão 3: PALAVRA | Lote: ... | num — "MDG | Lote:..." ou "PAPAIA | Lote:..."
+                    var RE_SIGLALOTE = /^[A-ZÁÀÂÃÉÊÍÓÔÕÚÇa-z]+\s*\|.*Lote:.*\|\s*([\d,\.]+)/i;
+                    var mSiglaLote = RE_SIGLALOTE.exec(linhaLote);
+                    // Padrão 4: começa com | — "| Lote: 062026 | 15,0000" (Laranja Baia)
+                    var mPipeLote = /^\|\s*Lote:\s*\d+\s*\|\s*([\d,\.]+)/.exec(linhaLote);
+                    // Padrão 5: só número — "18,0000" (Berinjela, Inhame, Maca Gala)
+                    var mSoNum = /^([\d,\.]+)$/.exec(linhaLote.trim());
+                    // Padrão 6: qtdcx | SIGLA | Lote: ... | pesocx — "1,0000 | CPG | Lote: 062026 | 1,2000" (Morango, Uva)
+                    var mQtdLote = /^([\d,\.]+)\s*\|.*Lote:.*\|\s*([\d,\.]+)/i.exec(linhaLote);
+                    // Padrão 7: vFCP — "240.00 | vFCP: 4.80" (Banana Passas — qtdcx já está no desc, pesocx = qtdKg)
+                    var temVFCP = /vFCP/i.test(linhaLote);
+
+                    if (temLote3 || temLoteDireto) {
+                        var loteSemPref = linhaLote.replace(/^Lote:\s*/i, '');
+                        var segs = loteSemPref.split('|').map(function(s){ return s.trim(); });
+                        for (var sl = segs.length - 1; sl >= 0; sl--) {
+                            if (/^[\d,\.]+$/.test(segs[sl]) && parseNumeroBR(segs[sl]) > 0) {
+                                pesocx = parseNumeroBR(segs[sl]); break;
+                            }
+                        }
+                        descCompleta += ' | ' + loteSemPref;
+                        li_avancar = 3;
+                    } else if (mQtdLote && !mSiglaLote) {
+                        // Padrão 6: qtdcx e pesocx vêm inteiramente da linhaLote
+                        qtdcx = parseNumeroBR(mQtdLote[1]);
+                        pesocx = parseNumeroBR(mQtdLote[2]);
+                        li_avancar = 3;
+                    } else if (mSiglaLote) {
+                        // Padrão 3: PAPAIA | Lote: ... | pesocx
+                        pesocx = parseNumeroBR(mSiglaLote[1]);
+                        li_avancar = 3;
+                    } else if (mPipeLote) {
+                        // Padrão 4: | Lote: 062026 | 15,0000
+                        pesocx = parseNumeroBR(mPipeLote[1]);
+                        li_avancar = 3;
+                    } else if (mSoNum) {
+                        // Padrão 5: só o peso numa linha isolada
+                        pesocx = parseNumeroBR(mSoNum[1]);
+                        li_avancar = 3;
+                    } else if (temVFCP) {
+                        // Padrão 7: vBCFCP — pesocx está na linhaDados antes do NCM: "25 CPG | Lote: | 4,8000 | vBCFCP: NCM..."
+                        var mPesoBCFCP = /\|\s*([\d,\.]+)\s*\|\s*vBCFCP/i.exec(linhaDados);
+                        pesocx = mPesoBCFCP ? parseNumeroBR(mPesoBCFCP[1]) : qtdKg;
+                        li_avancar = 3;
+                    } else {
+                        li_avancar = 2;
+                    }
+
+                    // qtdcx: se ainda 0, extrai do desc (partes[1])
+                    var partes = descCompleta.split('|').map(function(p){ return p.trim(); });
+                    var nome   = partes[0].trim();
+                    if (qtdcx === 0) {
+                        qtdcx = parseNumeroBR(partes[1] || '0');
+                    }
+                    // pesocx fallback: varre partes da desc de trás pra frente
+                    if (pesocx === 0) {
+                        for (var pi = partes.length - 1; pi >= 2; pi--) {
+                            if (/^[\d,\.]+$/.test(partes[pi].trim()) && parseNumeroBR(partes[pi]) > 0) {
+                                pesocx = parseNumeroBR(partes[pi]); break;
+                            }
+                        }
+                    }
+                    if (qtdcx === 0 && un === 'KG') { pesocx = qtdKg; }
+                    // Fallback BJ/UN: se qtdcx ainda zerado, usa quantidade da NF
+                    if (qtdcx === 0 && (un === 'BJ' || un === 'UN')) { qtdcx = qtdKg; }
+                    li += li_avancar;
+                    if (nome && nome.length >= 3) {
+                        itens.push({ descRaw:descCompleta, nome:nome, qtdcx:qtdcx, pesocx:pesocx,
+                            qtdOriginal:qtdKg, unidadeMedida:un, vUnitario:vUnit,
+                            vTotalItem:qtdKg*vUnit, tipoCalculoItem:'auto', precoManual:null });
+                    }
+                    continue;
+                } else {
+                    var descCompleta = descLinha1.replace(/\s*Lote:\s*$/i, '');
+                    var partes = descCompleta.split('|').map(function(p){ return p.trim(); });
+                    var nome  = partes[0].trim();
+                    var temPalavraReal = /[A-ZÁÀÂÃÉÊÍÓÔÕÚÇa-záàâãéêíóôõúç]{4,}/.test(nome);
+                    if (!temPalavraReal) { li++; continue; }
+                    var qtdcx = parseNumeroBR(partes[1] || '0');
+                    var pesocx = 0;
+                    for (var pi = partes.length - 1; pi >= 2; pi--) {
+                        var seg = partes[pi].trim();
+                        if (/^[\d,\.]+$/.test(seg) && parseNumeroBR(seg) > 0) {
+                            pesocx = parseNumeroBR(seg); break;
+                        }
+                    }
+                    var numsDadosFallback = linhaDados.match(/([\d]+[,\.][\d]+)/g) || [];
+                    var qtdKg = numsDadosFallback.length ? parseNumeroBR(numsDadosFallback[numsDadosFallback.length - 2] || '0') : 0;
+                    var vUnit = numsDadosFallback.length ? parseNumeroBR(numsDadosFallback[numsDadosFallback.length - 1] || '0') : 0;
+                    var mUN = linhaDados.match(/\b(KG|UN|CX|PC|CT)\b/i);
+                    var un = mUN ? mUN[1].toUpperCase() : 'KG';
+                    if (qtdcx === 0 && un === 'KG') { pesocx = qtdKg; }
+                    // Fallback BJ/UN: se qtdcx ainda zerado, usa quantidade da NF
+                    if (qtdcx === 0 && (un === 'BJ' || un === 'UN')) { qtdcx = qtdKg; }
+                    if (nome && nome.length >= 3) {
+                        itens.push({ descRaw:descCompleta, nome:nome, qtdcx:qtdcx, pesocx:pesocx,
+                            qtdOriginal:qtdKg, unidadeMedida:un, vUnitario:vUnit,
+                            vTotalItem:qtdKg*vUnit, tipoCalculoItem:'auto', precoManual:null });
+                    }
+                    li += 2; continue;
+                }
+            }
+            li++;
+        }
+
+        return {
+            id:       'nf_' + Date.now() + '_' + Math.random().toString(36).substr(2,5),
+            nNF:      nNF,
+            dataStr:  dataStr,
+            emitNome: emitNome,
+            destNome: destNome,
+            destCNPJ: destCNPJ,
+            pesoB:    pesoPadrao,
+            itens:    itens,
+            vNF:      vNF,
+            arquivo:  nomeArquivo,
+            fonte:    'PDF',
+            transpId: obterTranspIdPorCliente(destCNPJ, destNome),
+            freteCalculado: 0,
+            transpNome: ''
+        };
+    }
+
+    function obterTranspIdPorCliente(cnpj, nome) {
+        var chave = cnpj || nome || '';
+        if (!chave) return '';
+        var chaveNorm = chave.toLowerCase().replace(/[\s\.\/\-]/g,'');
+        var regra = ST.destinatarios.find(function(x) {
+            if (!x.cnpj) return false;
+            var xNorm = x.cnpj.toLowerCase().replace(/[\s\.\/\-]/g,'');
+            return xNorm === chaveNorm || chaveNorm.includes(xNorm) || xNorm.includes(chaveNorm);
+        });
+        return (regra && regra.transpId) ? regra.transpId : '';
+    }
+
+    function obterModalidadeCliente(chaveCliente) {
+        if(!chaveCliente) return 'kg';
+        var chaveNorm = chaveCliente.toLowerCase().replace(/[\s\.\/\-]/g,'');
+        var d = ST.destinatarios.find(function(x) {
+            if (!x.cnpj) return false;
+            var xNorm = x.cnpj.toLowerCase().replace(/[\s\.\/\-]/g,'');
+            return xNorm === chaveNorm || chaveNorm.includes(xNorm) || xNorm.includes(chaveNorm);
+        });
+        return d ? d.modal : 'kg';
+    }
+
+    function processarCalculosDeFreteNota(idNota) {
+        var nf = ST.lote.find(n => n.id === idNota);
+        if(!nf) return;
+
+        var modalidadePadraoCliente = nf.modalidadeCobranca || obterModalidadeCliente(nf.destCNPJ || nf.destNome);
+        var transp = ST.transportadoras.find(t => t.id === nf.transpId);
+
+        if (!transp) {
+            nf.freteCalculado = 0;
+            nf.transpNome = '';
+            return;
+        }
+
+        nf.transpNome = transp.nome;
+        var somatorioFrete = 0;
+        var somatorioFreteNormal = 0;
+        var somatorioFreteExcecao = 0;
+        var totalPesoBrutoItensCalculado = 0;
+        var totalPesoNormal = 0;
+        var totalPesoExcecao = 0;
+        var totalCxNormal = 0;
+        var totalCxExcecao = 0;
+
+        nf.itens.forEach(function(it) {
+            var modCalculoReal = modalidadePadraoCliente;
+            var temExcecao = false;
+            var precoExcecao = 0;
+            var modExcecao = '';
+
+            if (transp.excecoesProdutos && transp.excecoesProdutos.length > 0) {
+                var nomeNorm = it.nome.toLowerCase().trim();
+                var exc = transp.excecoesProdutos.find(function(e) {
+                    return nomeNorm.includes(e.nomeProd.toLowerCase().trim());
+                });
+                
+                if (exc) {
+
+                    
+                    if(it.pesocx === 0 && exc.pesoRegra){
+                        it.qtdcx = it.qtdOriginal / (it.pesocx = exc.pesoRegra);
+                    }// ↑ Verifica se há regra cadastrada de peso fixo e aplica
+                
+                    var pesoMaxExc = parseNumeroBR(exc.pesoMax || '0');
+                    var pesoOk = pesoMaxExc <= 0 || it.pesocx <= pesoMaxExc;
+                    if (pesoOk) {
+                        temExcecao = true;
+                        precoExcecao = parseNumeroBR(exc.preco);
+                        modExcecao = exc.tipoCobranca;
+                        modCalculoReal = modExcecao;
+                    }
+                }
+            }
+
+            it.temExcecao = temExcecao;
+            it.tipoCalculoItem = temExcecao ? modCalculoReal + ' (Exc)' : modCalculoReal;
+
+            var pesoCalculadoItem = (it.qtdcx === 0) ? it.pesocx : (it.qtdcx * it.pesocx);
+            totalPesoBrutoItensCalculado += pesoCalculadoItem;
+
+            var precoBase = modCalculoReal === 'cx' ? parseNumeroBR(transp.pCx) : parseNumeroBR(transp.pKg);
+            if (temExcecao) precoBase = precoExcecao;
+
+            var modalEfetivo = (it.qtdcx === 0) ? 'kg' : modCalculoReal;
+            var valorItem = modalEfetivo === 'cx' ? (it.qtdcx * precoBase) : (pesoCalculadoItem * precoBase);
+
+            if (it.precoManual !== null && it.precoManual !== undefined && it.precoManual !== '' && !isNaN(parseFloat(it.precoManual))) {
+                precoBase = parseNumeroBR(it.precoManual);
+                valorItem = modCalculoReal === 'cx' ? (it.qtdcx * precoBase) : (pesoCalculadoItem * precoBase);
+            }
+
+
+                
+
+
+            it.precoCobrado = precoBase;
+            somatorioFrete += valorItem;
+
+            // Acumula separado normal vs exceção
+            if (temExcecao) {
+                somatorioFreteExcecao += valorItem;
+                totalPesoExcecao += pesoCalculadoItem;
+                totalCxExcecao += it.qtdcx;
+            } else {
+                somatorioFreteNormal += valorItem;
+                totalPesoNormal += pesoCalculadoItem;
+                totalCxNormal += it.qtdcx;
+            }
+        });
+
+        nf.pesoCalculado      = totalPesoBrutoItensCalculado;
+        nf.pesoNormal         = totalPesoNormal;
+        nf.pesoExcecao        = totalPesoExcecao;
+        nf.totalCxNormal      = totalCxNormal;
+        nf.totalCxExcecao     = totalCxExcecao;
+        nf.freteNormal        = somatorioFreteNormal;
+        nf.freteExcecao       = somatorioFreteExcecao;
+        nf.temItensExcecao    = nf.itens.some(function(it){ return it.temExcecao; });
+
+        if (totalPesoBrutoItensCalculado === 0 && modalidadePadraoCliente === 'kg') {
+            somatorioFrete = nf.pesoB * parseNumeroBR(transp.pKg);
+        }
+
+        nf.freteCalculado = somatorioFrete;
+    }
+
+    function renderLoteCompleto() {
+        var container = document.getElementById('lote-container');
+        if (!ST.lote.length) {
+            container.style.display = 'none';
+            return;
+        }
+        container.style.display = 'block';
+        document.getElementById('txt-lote-count').textContent = ST.lote.length + " nota(s) carregada(s) no lote atual";
+
+        var totalPesoLote = 0, totalCxLote = 0, totalValorNotasLote = 0, totalFreteLote = 0;
+        ST.lote.forEach(function(nf) {
+            totalPesoLote += (nf.pesoCalculado > 0 ? nf.pesoCalculado : nf.pesoB);
+            totalValorNotasLote += nf.vNF;
+            totalFreteLote += (nf.freteCalculado || 0);
+            nf.itens.forEach(function(it) { totalCxLote += it.qtdcx; });
+        });
+
+        document.getElementById('lote-totais-cards').innerHTML =
+            '<div class="tot-card"><div class="tot-label">Peso Bruto Lote</div><div class="tot-val">' + formatarPeso(totalPesoLote) + ' kg</div></div>' +
+            '<div class="tot-card"><div class="tot-label">Qtd Caixas Lote</div><div class="tot-val">' + totalCxLote.toFixed(0) + ' cx</div></div>' +
+            '<div class="tot-card"><div class="tot-label">Valor Total NFs</div><div class="tot-val">' + formatarMoeda(totalValorNotasLote) + '</div></div>' +
+            '<div class="tot-card"><div class="tot-label">Frete Estimado Total</div><div class="tot-val">' + formatarMoeda(totalFreteLote) + '</div></div>';
+
+        var rootGridCards = document.getElementById('lote-cards-root');
+        rootGridCards.innerHTML = '';
+
+        ST.lote.forEach(function(nf) {
+            var aberto = (ST.idNotaSelecionadaLote === nf.id);
+            var modalidadeCliente = nf.modalidadeCobranca || obterModalidadeCliente(nf.destCNPJ || nf.destNome);
+
+            var divCard = document.createElement('div');
+            divCard.className = 'lote-card' + (aberto ? ' selected' : '');
+
+            var totalCxNota = nf.itens.reduce(function(acc, i){ return acc + i.qtdcx; }, 0);
+            var pesoTotal   = (nf.pesoCalculado > 0 ? nf.pesoCalculado : nf.pesoB);
+
+            var temItemSemPeso = nf.itens.some(function(it) {
+            var mod = (it.tipoCalculoItem || modalidadeCliente || 'kg')
+                        .replace(' (Exc)', '')
+                        .toLowerCase();
+            
+            if (mod === 'cx') {
+                // Caixa exige tanto qtdcx quanto pesocx
+                return !(it.qtdcx > 0) || !(it.pesocx > 0);
+            } else {
+                // Kg: só precisa ter algum peso — seja pesocx*qtdcx ou o pesoB da NF
+                var temPesoItem = (it.pesocx > 0);
+                var temPesoFallback = (nf.pesoB > 0);
+                return !temPesoItem && !temPesoFallback;
+            }
+        });
+
+            var statusOk = nf.itens.length > 0 && nf.freteCalculado > 0 && !temItemSemPeso;
+            var statusBadge = statusOk
+                ? '<span class="badge bg-ok">Ok</span>'
+                : '<span class="badge bg-warn">Verificar</span>';
+
+            var optTransp = '<option value="">Transportadora...</option>';
+            ST.transportadoras.forEach(function(t) {
+                optTransp += '<option value="'+t.id+'"'+(nf.transpId===t.id?' selected':'')+'>'+t.nome+'</option>';
+            });
+
+            divCard.innerHTML =
+                '<div class="lote-card-title">NF ' + nf.nNF + '</div>' +
+                '<div style="display:flex;flex-direction:column;flex:1;overflow:hidden;">' +
+                    '<div class="lote-card-sub">' + nf.destNome + '</div>' +
+                    (nf.destCNPJ ? '<div style="font-size:10px;color:var(--color-text-muted);">' + nf.destCNPJ + '</div>' : '') +
+                '</div>' +
+                '<span class="badge bg-' + nf.fonte.toLowerCase() + '" style="flex-shrink:0;">' + nf.fonte + '</span>' +
+                statusBadge +
+                '<span style="font-size:11px;color:var(--color-text-muted);white-space:nowrap;flex-shrink:0;">' +
+                    formatarPeso(pesoTotal) + ' kg · ' + totalCxNota.toFixed(0) + ' cx · ' + formatarMoeda(nf.freteCalculado > 0 ? nf.freteCalculado : nf.vNF) +
+                '</span>' +
+                '<span class="card-transp-placeholder"></span>';
+
+
+            
+            var selEl = document.createElement('select');
+            selEl.className = 'input-edit select-transp-lote';
+            selEl.style.cssText = 'min-width:150px; flex-shrink:0; font-size:11px;';
+            selEl.innerHTML = optTransp;
+
+            
+            
+            // LÓGICA DO MENU FLUTUANTE — aparece só na primeira nota do lote
+            (function(nfId){ 
+                selEl.onchange = function(e){ 
+                    e.stopPropagation(); 
+                    if(!this.value) {
+                        alterarTransportadoraNota(nfId, '');
+                        return;
+                    }
+                    var isPrimeiraNota = ST.lote.length > 0 && ST.lote[0].id === nfId;
+                    if (isPrimeiraNota) {
+                        var rect = this.getBoundingClientRect();
+                        var menu = document.getElementById('menu-float-transp');
+                        menu.style.display = 'block';
+                        menu.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+                        menu.style.left = (rect.left + window.scrollX - 100) + 'px';
+                        menuFloatCtx.idNota = nfId;
+                        menuFloatCtx.idTransp = this.value;
+                    } else {
+                        alterarTransportadoraNota(nfId, this.value);
+                    }
+                }; 
+            })(nf.id);
+
+            selEl.onclick = function(e){ e.stopPropagation(); };
+            divCard.querySelector('.card-transp-placeholder').replaceWith(selEl);
+
+            (function(nfId){
+                divCard.onclick = function(e) {
+                    if (e.target.closest('select') || e.target.closest('.lote-card-toggle')) return;
+                    ST.idNotaSelecionadaLote = (ST.idNotaSelecionadaLote === nfId) ? null : nfId;
+                    renderLoteCompleto();
+
+                    var cardAberto = rootGridCards.querySelector('.lote-card.selected');
+                    if (ST.idNotaSelecionadaLote === nfId && cardAberto) {
+                           
+                        cardAberto.scrollIntoView({ behavior: "auto", block: "start", inline: "center" });
+                    }
+                };
+
+                var btnToggle = divCard.querySelector('.lote-card-toggle');
+                if (btnToggle) {
+                    btnToggle.onclick = function(e) {
+                        e.stopPropagation();
+                        ST.idNotaSelecionadaLote = (ST.idNotaSelecionadaLote === nfId) ? null : nfId;
+                        renderLoteCompleto();
+                    };
+                }
+            })(nf.id);
+
+            rootGridCards.appendChild(divCard);
+
+            var divItens = document.createElement('div');
+            divItens.className = 'lote-card-itens' + (aberto ? ' aberto' : '');
+
+            if (aberto) {
+                var tabelaHtml =
+                    '<div class="table-wrap">' +
+                    '<table>' +
+                    '<thead><tr>' +
+                    '<th>Produto</th>' +
+                    '<th style="width:80px;text-align:center;">Qtd NF</th>' +
+                    '<th style="width:100px;">Qtd Cx</th>' +
+                    '<th style="width:110px;">Kg / Cx</th>' +
+                    '<th style="width:110px;">Peso Total</th>' +
+                    '<th style="width:100px;">Valor Item</th>' +
+                    '<th style="width:70px;">Modal</th>' +
+                    '<th style="width:110px;">Preço Unit.</th>' +
+                    '</tr></thead>' +
+                    '<tbody id="itens-tbody-' + nf.id + '"></tbody>' +
+                    '</table>' +
+                    '</div>';
+
+                var modalOpts = '<option value="kg"' + (modalidadeCliente==='kg'?' selected':'') + '>Por KG</option>' +
+                                '<option value="cx"' + (modalidadeCliente==='cx'?' selected':'') + '>Por Caixa</option>';
+
+                divItens.innerHTML =
+                    '<div style="background: var(--color-bg-main);border-radius: 8px;padding: 9px;display: flex;align-items: center;justify-content: space-between;flex-wrap: wrap;gap: 16px;margin: 10px;border: 1px solid var(--color-border-light);">' +
+                        '<span style="font-size:11px;font-weight:600;color:var(--color-text-sub);">Cobrança:</span>' +
+                        '<select class="input-edit" style="font-size:11px;padding:3px 6px;width: 7%;" onchange="alterarModalidadeNota(\''+nf.id+'\',this.value)">'+modalOpts+'</select>' +
+                        '<span style="margin-left:auto;font-size:22px; font-weight:800; color:var(--color-success);">Valor → '+formatarMoeda(nf.freteCalculado)+'</span>' +
+                    '</div>' +
+                    tabelaHtml;
+
+                divItens.style.borderRadius = '0 0 6px 6px';
+                rootGridCards.appendChild(divItens);
+
+                var tbody = divItens.querySelector('#itens-tbody-' + nf.id);
+                nf.itens.forEach(function(it, index) {
+                    var pesoTotalItem = (it.qtdcx === 0) ? it.pesocx : (it.qtdcx * it.pesocx);
+                    var tr = document.createElement('tr');
+                    // Destaque visual para itens com exceção
+                    var excLabel = it.temExcecao ? ' <span style="font-size: 11px;color: #ff0000;font-weight: 700;">(exc)</span>' : '';
+                    tr.innerHTML =
+                        '<td style="font-weight:500;">' + it.nome + excLabel + '</td>' +
+                        '<td style="text-align:center;color:var(--color-text-sub);">' + it.qtdOriginal + ' ' + it.unidadeMedida + '</td>' +
+                        '<td><input type="number" class="input-edit" step="1" value="'+it.qtdcx+'" onchange="atualizarDadosItemLote(\''+nf.id+'\','+index+',\'qtdcx\',this.value)"></td>' +
+                        '<td><input type="number" class="input-edit" step="0.001" value="'+it.pesocx+'" onchange="atualizarDadosItemLote(\''+nf.id+'\','+index+',\'pesocx\',this.value)"></td>' +
+                        '<td style="font-weight:600;color:var(--color-text-sub);">' + formatarPeso(pesoTotalItem) + ' kg</td>' +
+                        '<td>' + formatarMoeda(it.vTotalItem) + '</td>' +
+                        '<td style="font-weight:600; font-size:10px;">' + (it.tipoCalculoItem||'kg').toUpperCase() + '</td>' +
+                        '<td><input type="number" class="input-edit" step="0.0001" value="'+(it.precoManual != null ? it.precoManual : (it.precoCobrado||0))+'" onchange="atualizarDadosItemLote(\''+nf.id+'\','+index+',\'precoManual\',this.value)"></td>';
+                    tbody.appendChild(tr);
+                });
+                // Rodapé discreto se houver itens de exceção
+                if (nf.temItensExcecao) {
+                    var trSep = document.createElement('tr');
+                    trSep.innerHTML = '<td colspan="8" style="background:#fef9c3;padding:5px 10px;font-size:11px;font-weight:700;color:#92400e;border-top:2px solid #f59e0b;">' +
+                        '⚡ Exceção: ' + formatarMoeda(nf.freteExcecao) + ' · ' +
+                        'Normal: ' + formatarMoeda(nf.freteNormal) + ' · ' +
+                        'Total: ' + formatarMoeda(nf.freteCalculado) +
+                        '</td>';
+                    tbody.appendChild(trSep);
+                }
+            } else {
+                rootGridCards.appendChild(divItens);
+            } 
+        });
+    }
+
+    // AÇÕES DO MENU FLUTUANTE
+    function execFloatTransp(acao) {
+        document.getElementById('menu-float-transp').style.display = 'none';
+        var idNota = menuFloatCtx.idNota;
+        var idTransp = menuFloatCtx.idTransp;
+        if(!idNota || !idTransp) return;
+
+        var nf = ST.lote.find(n => n.id === idNota);
+        if(!nf) return;
+
+        if(acao === 'vincular') {
+            // Transportadora e modalidade vêm sempre da primeira nota do lote
+            var nfRef = ST.lote[0];
+            var transpIdRef = nfRef ? (nfRef.transpId || idTransp) : idTransp;
+            var modalidadeReferencia = nfRef ? (nfRef.modalidadeCobranca || 'kg') : 'kg';
+
+            // Coleta todos os CNPJs/nomes distintos do lote
+            var cnpjsVistos = {};
+            ST.lote.forEach(function(n) {
+                var chaveN = (n.destCNPJ || n.destNome || '').trim();
+                if (!chaveN) return;
+                var norm = chaveN.toLowerCase().replace(/[\s\.\/\-]/g,'');
+                if (!cnpjsVistos[norm]) cnpjsVistos[norm] = chaveN;
+            });
+
+            // Para cada CNPJ distinto: atualiza ou cria regra em ST.destinatarios
+            Object.keys(cnpjsVistos).forEach(function(norm) {
+                var chaveN = cnpjsVistos[norm];
+                var regra = ST.destinatarios.find(function(x) {
+                    return x.cnpj.toLowerCase().replace(/[\s\.\/\-]/g,'') === norm;
+                });
+                if (regra) {
+                    regra.transpId = transpIdRef;
+                    regra.modal = modalidadeReferencia;
+                } else {
+                    ST.destinatarios.push({
+                        id: 'd_' + Date.now() + '_' + norm.slice(0,6),
+                        cnpj: chaveN,
+                        transpId: transpIdRef,
+                        modal: modalidadeReferencia
+                    });
+                }
+            });
+
+            persistirDados();
+            renderConfiguracoes();
+            mostrarToast('Todos os CNPJs do lote vinculados nas configurações!');
+
+            // Aplica transportadora E modalidade a todas as notas do lote
+            ST.lote.forEach(function(n) {
+                n.transpId = transpIdRef;
+                n.modalidadeCobranca = modalidadeReferencia;
+                n.itens.forEach(function(it) {
+                    it.tipoCalculoItem = modalidadeReferencia;
+                    it.precoManual = null;
+                });
+                processarCalculosDeFreteNota(n.id);
+            });
+        } 
+        else if(acao === 'todos') {
+            ST.lote.forEach(function(n) {
+                n.transpId = idTransp;
+                processarCalculosDeFreteNota(n.id);
+            });
+            mostrarToast('Transportadora aplicada a todo o lote atual.');
+        }
+        else if(acao === 'apenas') {
+            nf.transpId = idTransp;
+            processarCalculosDeFreteNota(idNota);
+        }
+
+        renderLoteCompleto();
+    }
+
+    function alterarModalidadeNota(idNota, modalidade) {
+        var nf = ST.lote.find(n => n.id === idNota);
+        if(!nf) return;
+        nf.modalidadeCobranca = modalidade;
+        
+        nf.itens.forEach(function(it){
+            it.tipoCalculoItem = modalidade;
+            it.precoManual = null;
+        });
+        processarCalculosDeFreteNota(idNota);
+        renderLoteCompleto();
+    }
+
+    function atualizarDadosItemLote(idNota, indexItem, campo, valor) {
+        var nf = ST.lote.find(n => n.id === idNota);
+        if(!nf) return; 
+
+        if (campo === 'nome' || campo === 'tipoCalculoItem') {
+            nf.itens[indexItem][campo] = valor;
+        } else {
+            nf.itens[indexItem][campo] = parseNumeroBR(valor);
+        }
+
+        var novoPesoCapa = 0;
+        nf.itens.forEach(function(i) { novoPesoCapa += (i.qtdcx * i.pesocx); });
+        if(novoPesoCapa > 0) nf.pesoB = novoPesoCapa;
+
+        //alert( document.querySelector('#itens-tbody-' + nf.id +' tr:nth-of-type('+ (indexItem+1) +') td:nth-of-type(7)').textContent); 
+        //alert( document.getElementById('itens-tbody-' + nf.id).querySelectorAll('tr')[indexItem].querySelectorAll('td')[6].innerText  );
+        cobrancaTipo = document.querySelector('#itens-tbody-' + nf.id +' tr:nth-of-type('+ (indexItem+1) +') td:nth-of-type(7)').textContent;
+        
+            // CONDIÇÕES PARA ENTRAR NO IF
+        c1 = cobrancaTipo === 'KG' || cobrancaTipo === 'AUTO';
+        c2 = nf.itens[indexItem] === ST.lote[0].itens[0];
+
+        if(c1 && c2){
+            abrirModal(
+                'ALTERAR KG / CX',
+                'Deseja alterar o peso por caixa de todos os itens em todas as notas ?',
+                function() { 
+                    ST.lote.forEach(function(n) { //PARA ALTERAR TODOS OS PESOS DOS ITENS DO LOTE
+                        n.itens.forEach(function(it) { 
+                            it.qtdcx = it.qtdOriginal / valor;
+                            it.pesocx = valor
+                        });
+                    });
+                mostrarToast('\u2713 Conluído com sucesso. \n'+ (ST.lote.length > 1 ? 'Foram alteradas '+ ST.lote.length +' notas.': 'A nota foi alterada') );
+            });  
+
+        }else{ if(campo === 'pesocx') nf.itens[indexItem].qtdcx = nf.itens[indexItem].qtdOriginal / valor;  };
+
+        processarCalculosDeFreteNota(idNota);
+        renderLoteCompleto();
+    }
+
+    function alterarTransportadoraNota(idNota, idTransp) {
+        // Função agora usada apenas para quando o select é limpo ("Nenhuma transportadora")
+        var nfIndex = ST.lote.findIndex(n => n.id === idNota);
+        if(nfIndex === -1) return;
+        ST.lote[nfIndex].transpId = idTransp;
+        processarCalculosDeFreteNota(ST.lote[nfIndex].id);
+        renderLoteCompleto();
+    }
+
+    function limparLoteAtual() {
+        ST.lote = [];
+        ST.idNotaSelecionadaLote = null;
+        renderLoteCompleto();
+    }
+
+    function salvarLoteCompleto() {
+        if(!ST.lote.length) return;
+        var contagemSalvos = 0;
+
+        ST.lote.forEach(function(nf) {
+            var tsBase = Date.now() + Math.random();
+            var idPrincipal = tsBase;
+
+            var itensNormais   = nf.itens.filter(function(it){ return !it.temExcecao; });
+            var itensExcecao   = nf.itens.filter(function(it){ return it.temExcecao; });
+            var temExc         = nf.temItensExcecao && itensExcecao.length > 0;
+
+            // Usa valores separados se disponíveis, senão usa totais
+            var pesoNorm = temExc ? (nf.pesoNormal || 0)   : ((nf.pesoCalculado > 0) ? nf.pesoCalculado : nf.pesoB);
+            var pesoExc  = temExc ? (nf.pesoExcecao || 0)  : 0;
+            var cxNorm   = temExc ? (nf.totalCxNormal || 0) : nf.itens.reduce(function(a,i){ return a+i.qtdcx; }, 0);
+            var cxExc    = temExc ? (nf.totalCxExcecao || 0): 0;
+            var frNorm   = temExc ? (nf.freteNormal || 0)   : nf.freteCalculado;
+            var frExc    = temExc ? (nf.freteExcecao || 0)  : 0;
+
+            // Registro PRINCIPAL (itens normais)
+            ST.registros.unshift({
+                id: idPrincipal,
+                data: nf.dataStr,
+                nNF: nf.nNF,
+                emitente: nf.emitNome,
+                destinatario: nf.destNome,
+                destCNPJ: nf.destCNPJ,
+                pesoKg: pesoNorm,
+                totalCx: cxNorm,
+                valorNF: nf.vNF,
+                transportadora: nf.transpNome || 'Sem Transportadora',
+                frete: frNorm,
+                freteUnitKg: pesoNorm > 0 ? frNorm / pesoNorm : 0,
+                freteUnitCx: cxNorm  > 0 ? frNorm / cxNorm  : 0,
+                fonte: nf.fonte,
+                isExcecao: false,
+                itens: JSON.parse(JSON.stringify(temExc ? itensNormais : nf.itens))
+            });
+            contagemSalvos++;
+
+            // Registro de EXCEÇÃO (apenas itens com exceção)
+            if (temExc) {
+                ST.registros.unshift({
+                    id: tsBase + 0.5,
+                    nfOrigemId: idPrincipal,
+                    data: nf.dataStr,
+                    nNF: nf.nNF,
+                    emitente: nf.emitNome,
+                    destinatario: nf.destNome,
+                    destCNPJ: nf.destCNPJ,
+                    pesoKg: pesoExc,
+                    totalCx: cxExc,
+                    valorNF: 0,
+                    transportadora: nf.transpNome || 'Sem Transportadora',
+                    frete: frExc,
+                    freteUnitKg: pesoExc > 0 ? frExc / pesoExc : 0,
+                    freteUnitCx: cxExc  > 0 ? frExc / cxExc  : 0,
+                    fonte: nf.fonte,
+                    isExcecao: true,
+                    itens: JSON.parse(JSON.stringify(itensExcecao))
+                });
+            }
+        });
+
+        persistirDados();
+        limparLoteAtual();
+        exibirAlertaGlobal('import-alert', "Sucesso! " + contagemSalvos + " notas fiscais foram processadas e salvas no histórico definitivo.", 'success');
+    }
+
+    function renderHistoricoCompleto() {
+        var selectFiltro = document.getElementById('filter-transp');
+        var valorSelecionadoPreviamente = selectFiltro.value;
+        
+        selectFiltro.innerHTML = '<option value="">🚚 Todas as Transportadoras</option>';
+        var listasUnicasTransp = [...new Set(ST.registros.map(r => r.transportadora))];
+        listasUnicasTransp.forEach(function(t) {
+            if(t) selectFiltro.innerHTML += '<option value="' + t + '" ' + (valorSelecionadoPreviamente === t ? 'selected' : '') + '>' + t + '</option>';
+        });
+
+        var chkAll = document.getElementById('chk-all-hist');
+        if(chkAll) chkAll.checked = false;
+
+        renderHistoricoFiltrado();
+    }
+
+    function sortHist(col) {
+        if (histSortCol === col) {
+            histSortAsc = !histSortAsc;
+        } else {
+            histSortCol = col;
+            histSortAsc = true;
+        }
+        renderHistoricoFiltrado();
+    }
+
+    function renderHistoricoFiltrado() {
+        var filtroDestinatario = document.getElementById('filter-dest').value.toLowerCase().trim();
+        var filtroTransportadora = document.getElementById('filter-transp').value;
+        var dStart = document.getElementById('filter-date-start').value;
+        var dEnd = document.getElementById('filter-date-end').value;
+
+        var filtrados = ST.registros.filter(function(r) {
+            var q = filtroDestinatario;
+            var matchDest = !q || (r.destinatario||'').toLowerCase().includes(q)
+                || (r.destCNPJ||'').toLowerCase().includes(q)
+                || (r.emitente||'').toLowerCase().includes(q)
+                || (r.nNF||'').toLowerCase().includes(q)
+                || (r.transportadora||'').toLowerCase().includes(q)
+                || (r.data||'').toLowerCase().includes(q)
+                || (r.fonte||'').toLowerCase().includes(q)
+                || String(r.valorNF||'').includes(q)
+                || String(r.frete||'').includes(q);
+            var matchTransp = !filtroTransportadora || r.transportadora === filtroTransportadora;
+            var rDateStr = parseBRDate(r.data);
+            var matchDate = true;
+            if (dStart && rDateStr < dStart) matchDate = false;
+            if (dEnd && rDateStr > dEnd) matchDate = false;
+            return matchDest && matchTransp && matchDate;
+        });
+
+        filtrados.sort(function(a, b) {
+            var valA = a[histSortCol];
+            var valB = b[histSortCol];
+            if (histSortCol === 'data') { valA = parseBRDate(a.data); valB = parseBRDate(b.data); }
+            else if (typeof valA === 'string') { valA = valA.toLowerCase(); valB = valB.toLowerCase(); }
+            if (valA < valB) return histSortAsc ? -1 : 1;
+            if (valA > valB) return histSortAsc ? 1 : -1;
+            return 0;
+        });
+
+        var totalPesoH = 0, totalCxH = 0, totalFreteH = 0;
+        filtrados.forEach(function(r) {
+            totalPesoH += (parseFloat(r.pesoKg) || 0);
+            totalCxH += (parseFloat(r.totalCx) || 0);
+            totalFreteH += (parseFloat(r.frete) || 0);
+        });
+
+        document.getElementById('h-card-nfs').textContent = filtrados.length;
+        document.getElementById('h-card-peso').textContent = formatarPeso(totalPesoH) + " kg";
+        document.getElementById('h-card-cx').textContent = totalCxH.toFixed(0) + " cx";
+        document.getElementById('h-card-frete').textContent = formatarMoeda(totalFreteH);
+
+        var tbody = document.getElementById('hist-table-tbody');
+        tbody.innerHTML = '';
+
+        if (!filtrados.length) {
+            document.getElementById('hist-empty').style.display = 'block';
+            return;
+        }
+        document.getElementById('hist-empty').style.display = 'none';
+
+        var chkAll = document.getElementById('chk-all-hist');
+        if(chkAll) chkAll.checked = false;
+
+        filtrados.forEach(function(r) {
+            var isExc    = r.isExcecao === true;
+            var fonteBadge = '<span class="badge bg-' + r.fonte.toLowerCase() + '">' + r.fonte + '</span>';
+
+            var trPrincipal = document.createElement('tr');
+            trPrincipal.innerHTML =
+                '<td style="text-align:center;"><input type="checkbox" class="chk-hist-row" value="' + r.id + '"></td>' +
+                '<td>' + r.data + '</td>' +
+                '<td style="font-weight:600;">' + r.nNF + (isExc ? ' <span style="font-size:10px;color: #3d5aef;font-weight: 800;">exc</span>' : '') + '</td>' +
+                '<td>' + fonteBadge + '</td>' +
+                '<td title="' + r.destinatario + '" style="max-width:228px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;padding-right: 0.5%;">' + r.destinatario + '</td>' +
+                '<td style="font-weight:600; color:var(--color-text-sub);">' + formatarPeso(r.pesoKg) + ' kg</td>' +
+                '<td style="font-weight:600; color:var(--color-text-sub);">' + parseFloat(r.totalCx).toFixed(0) + ' cx</td>' +
+                '<td>' + (isExc ? '<span style="color:#92400e;font-size:11px;">—</span>' : formatarMoeda(r.valorNF)) + '</td>' +
+                '<td><span style="font-size:11px; font-weight:600; color:var(--color-primary);">' + r.transportadora + '</span></td>' +
+                '<td><input type="number" class="input-edit" style="font-weight:700; color:var(--color-success); width: 50%;" step="0.01" value="' + parseFloat(r.frete).toFixed(2) + '" onchange="editarFreteDiretoNoHistorico(' + r.id + ', this.value)"></td>' +
+                '<td style="color:var(--color-text-sub); font-family:monospace;">' + formatarMoeda(r.freteUnitKg) + '</td>' +
+                '<td style="color:var(--color-text-sub); font-family:monospace;">' + formatarMoeda(r.freteUnitCx) + '</td>' +
+                '<td style="text-align:center;">' +
+                    '<button class="btn sm" onclick="alternarExibicaoItensHistorico(' + r.id + ')" title="Ver Itens"><i class="ti ti-list"></i></button>' +
+                    '<button class="btn sm danger" onclick="excluirItemDoHistorico(' + r.id + ')" title="Excluir"><i class="ti ti-trash"></i></button>' +
+                '</td>';
+            tbody.appendChild(trPrincipal);
+
+            var trItensOcultos = document.createElement('tr');
+            trItensOcultos.id = 'hist-det-row-' + r.id;
+            trItensOcultos.style.display = 'none';
+            
+            var htmlSubTabelaItens =
+                '<td colspan="13" style="background:var(--color-bg-main); padding:12px 24px;">' +
+                    '<div style="border:1px solid var(--color-border); border-radius:6px; background:#fff; padding:10px;">' +
+                        '<h4 style="font-size:12px; font-weight:700; margin-bottom:8px; color:var(--color-text-main);"><i class="ti ti-box-seam"></i> Abertura Cadastrada de Itens da NF-e</h4>' +
+                        '<table style="width:100%; border-collapse:collapse; font-size:11px; text-align:left;">' +
+                            '<thead><tr style="border-bottom:1px solid var(--color-border-light); color:var(--color-text-muted); font-weight:600;">' +
+                                '<th style="padding:4px 6px;">Nome do Produto</th>' +
+                                '<th style="padding:4px 6px;">Qtd Caixas</th>' +
+                                '<th style="padding:4px 6px;">Peso / Caixa</th>' +
+                                '<th style="padding:4px 6px;">Peso Total</th>' +
+                                '<th style="padding:4px 6px;">Frete / Kg</th>' +
+                                '<th style="padding:4px 6px;">Frete / Cx</th>' +
+                                '<th style="padding:4px 6px;">Modalidade</th>' +
+                            '</tr></thead><tbody>';
+
+            if(r.itens && r.itens.length) {
+                var pesoTotalNota = r.itens.reduce(function(s, it){ return s + (it.qtdcx * it.pesocx); }, 0);
+                var totalCxNota   = r.itens.reduce(function(s, it){ return s + it.qtdcx; }, 0);
+                var freteNota     = r.frete || 0;
+                r.itens.forEach(function(it) {
+                    var pesoItem  = it.qtdcx * it.pesocx;
+                    var propPeso  = pesoTotalNota > 0 ? pesoItem / pesoTotalNota : 0;
+                    var freteItem = freteNota * propPeso;
+                    var freteKg   = pesoItem > 0 ? freteItem / pesoItem : 0;
+                    var freteCx   = it.qtdcx > 0 ? freteItem / it.qtdcx : 0;
+                    htmlSubTabelaItens +=
+                        '<tr style="border-bottom:1px solid #f8fafc;">' +
+                            '<td style="padding:5px 6px; font-weight:500;">' + it.nome + '</td>' +
+                            '<td style="padding:5px 6px;">' + it.qtdcx.toFixed(0) + ' cx</td>' +
+                            '<td style="padding:5px 6px;">' + formatarPeso(it.pesocx) + ' kg</td>' +
+                            '<td style="padding:5px 6px; font-weight:600;">' + formatarPeso(pesoItem) + ' kg</td>' +
+                            '<td style="padding:5px 6px; color:var(--color-primary); font-weight:600;">' + formatarMoeda(freteKg) + '</td>' +
+                            '<td style="padding:5px 6px; color:var(--color-primary); font-weight:600;">' + formatarMoeda(freteCx) + '</td>' +
+                            '<td style="padding:5px 6px;"><span class="badge bg-xml">' + (it.tipoCalculoItem || 'auto') + '</span></td>' +
+                        '</tr>';
+                });
+            } else {
+                htmlSubTabelaItens += '<tr><td colspan="7" style="padding:8px; color:var(--color-text-muted); text-align:center;">Não existem detalhes estruturados de itens salvos nesta nota.</td></tr>';
+            }
+
+            htmlSubTabelaItens += '</tbody></table></div></td>';
+            trItensOcultos.innerHTML = htmlSubTabelaItens;
+            tbody.appendChild(trItensOcultos);
+        });
+    }
+
+    function toggleAllHist(chk) {
+        var checkboxes = document.querySelectorAll('.chk-hist-row');
+        checkboxes.forEach(function(c) { c.checked = chk.checked; });
+    }
+
+    function excluirSelecionadosHistorico() {
+        var checkboxes = document.querySelectorAll('.chk-hist-row:checked');
+        if (checkboxes.length === 0) { mostrarToastAviso('Selecione ao menos um registro para excluir.'); return; }
+        var idsToRemove = Array.from(checkboxes).map(function(c){ return c.value; });
+        // Inclui também registros de exceção vinculados aos principais selecionados
+        var idsExcVinc = ST.registros
+            .filter(function(r){ return r.nfOrigemId && idsToRemove.includes(String(r.nfOrigemId)); })
+            .map(function(r){ return String(r.id); });
+        var todosIds = idsToRemove.concat(idsExcVinc);
+        ST.registros = ST.registros.filter(function(r){ return !todosIds.includes(String(r.id)); });
+        persistirDados();
+        renderHistoricoCompleto();
+    }
+
+    function editarFreteDiretoNoHistorico(idReg, novoValorFreteString) {
+        var reg = ST.registros.find(x => x.id === idReg);
+        if(!reg) return;
+        var valorNumerico = parseNumeroBR(novoValorFreteString);
+        reg.frete = valorNumerico;
+        reg.freteUnitKg = reg.pesoKg > 0 ? (valorNumerico / reg.pesoKg) : 0;
+        reg.freteUnitCx = reg.totalCx > 0 ? (valorNumerico / reg.totalCx) : 0;
+        persistirDados();
+        renderHistoricoFiltrado();
+    }
+
+    function alternarExibicaoItensHistorico(idReg) {
+        var el = document.getElementById('hist-det-row-' + idReg);
+        if(!el) return;
+        el.style.display = el.style.display === 'none' ? 'table-row' : 'none';
+    }
+
+    function excluirItemDoHistorico(idReg) {
+        // Remove o registro e, se for o principal, remove também o de exceção vinculado
+        var reg = ST.registros.find(function(r){ return r.id === idReg; });
+        ST.registros = ST.registros.filter(function(r){
+            if (r.id === idReg) return false;
+            // Remove exceção vinculada ao principal excluído
+            if (!reg.isExcecao && r.nfOrigemId === idReg) return false;
+            return true;
+        });
+        persistirDados();
+        renderHistoricoCompleto();
+    }
+
+    function formatarMoedaExport(v) {
+        return 'R$ ' + parseFloat(v || 0).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+
+    function copiarDadosExportacao() {
+        if(!ST.registros.length) return mostrarToastAviso('Nenhum dado salvo para copiar.');
+
+        var FIELD_EXTRACTORS = {
+            data:           function(r){ return r.data || ''; },
+            nNF:            function(r){ return r.nNF || ''; },
+            fonte:          function(r){ return (r.fonte || '') + (r.isExcecao ? '-EXC' : ''); },
+            emitente:       function(r){ return r.emitente || ''; },
+            destinatario:   function(r){ return r.destinatario || ''; },
+            destCNPJ:       function(r){ return r.destCNPJ || ''; },
+            pesoKg:         function(r){ return formatarPeso(r.pesoKg || 0); },
+            totalCx:        function(r){ return parseFloat(r.totalCx || 0).toFixed(0); },
+            valorNF:        function(r){ return formatarMoedaExport(r.valorNF || 0); },
+            transportadora: function(r){ return r.transportadora || ''; },
+            frete:          function(r){ return formatarMoedaExport(r.frete || 0); },
+            freteUnitKg:    function(r){ return formatarMoedaExport(r.freteUnitKg || 0); },
+            freteUnitCx:    function(r){ return formatarMoedaExport(r.freteUnitCx || 0); }
+        };
+
+        var camposAtivos = exportFieldsConfig.filter(function(f){ return f.ativo; });
+        if (!camposAtivos.length) return mostrarToastAviso('Nenhum campo ativo para cópia. Configure na aba Configurações.');
+
+        var cabecalho = camposAtivos.map(function(f){ return f.header || f.key; });
+        var linhasMatriz = ST.registros.map(function(r) {
+            return camposAtivos.map(function(f) {
+                var extrator = FIELD_EXTRACTORS[f.key];
+                return extrator ? extrator(r) : (r[f.key] || '');
+            });
+        });
+
+        var textoFinal = cabecalho.join('\t') + '\n' + linhasMatriz.map(l => l.join('\t')).join('\n');
+
+        navigator.clipboard.writeText(textoFinal).then(function() {
+            mostrarToast('✓ Dados copiados com sucesso! Cole na sua planilha (Ctrl+V).');
+        }).catch(function(err) {
+            alert('Falha ao copiar dados. O navegador bloqueou a ação: ' + err);
+        });
+    }
+
+    function exportData(tipoFormatacao) {
+        if(!ST.registros.length) return mostrarToastAviso('Nenhum dado salvo para exportação.');
+
+        var FIELD_EXTRACTORS = {
+            data:           function(r){ return r.data || ''; },
+            nNF:            function(r){ return r.nNF || ''; },
+            fonte:          function(r){ return r.fonte || ''; },
+            emitente:       function(r){ return r.emitente || ''; },
+            destinatario:   function(r){ return r.destinatario || ''; },
+            destCNPJ:       function(r){ return r.destCNPJ || ''; },
+            pesoKg:         function(r){ return formatarPeso(r.pesoKg || 0); },
+            totalCx:        function(r){ return parseFloat(r.totalCx || 0).toFixed(0); },
+            valorNF:        function(r){ return formatarMoedaExport(r.valorNF || 0); },
+            transportadora: function(r){ return r.transportadora || ''; },
+            frete:          function(r){ return formatarMoedaExport(r.frete || 0); },
+            freteUnitKg:    function(r){ return formatarMoedaExport(r.freteUnitKg || 0); },
+            freteUnitCx:    function(r){ return formatarMoedaExport(r.freteUnitCx || 0); }
+        };
+
+        var camposAtivos = exportFieldsConfig.filter(function(f){ return f.ativo; });
+        if (!camposAtivos.length) return alert('Nenhum campo ativo para exportação. Configure os campos na aba Configurações.');
+
+        var cabecalho = camposAtivos.map(function(f){ return f.header || f.key; });
+
+        var linhasMatriz = ST.registros.map(function(r) {
+            return camposAtivos.map(function(f) {
+                var extrator = FIELD_EXTRACTORS[f.key];
+                return extrator ? extrator(r) : (r[f.key] || '');
+            });
+        });
+
+        if (tipoFormatacao === 'csv') {
+            var stringCsvConteudo = '\uFEFF' + cabecalho.join(';') + '\n' + linhasMatriz.map(l => l.join(';')).join('\n');
+            var blobObj = new Blob([stringCsvConteudo], { type: 'text/csv;charset=utf-8;' });
+            acionarDownloadDispositivo(blobObj, 'relatorio_fretes_' + new Date().toISOString().slice(0,10) + '.csv');
+        } else {
+            var isMoeda = { frete: true, freteUnitKg: true, freteUnitCx: true, valorNF: true };
+            var isPeso  = { pesoKg: true };
+            
+            var dataAlign    = excelConfig.dataAlign    || 'left';
+            var dataFontSize = excelConfig.dataFontSize || '11px';
+            var numCols      = camposAtivos.length;
+
+            // Linha de TÍTULO da planilha (acima dos cabeçalhos)
+            var titleHtml = '';
+            if (excelConfig.titleText) {
+                var tBg    = excelConfig.titleBg    || '#1e40af';
+                var tColor = excelConfig.titleColor || '#ffffff';
+                var tFont  = excelConfig.titleFontSize || '16px';
+                titleHtml = '<tr><td colspan="' + numCols + '" style="background:' + tBg + ';color:' + tColor +
+                    ';font-size:' + tFont + ';font-weight:bold;padding:10px 14px;border:1px solid #cbd5e1;text-align:center;">' +
+                    escHtml(excelConfig.titleText) + '</td></tr>';
+            }
+
+            // Cabeçalhos com cor por coluna (usa cor do campo se definida, senão usa global)
+            var thHtml = camposAtivos.map(function(f, i) {
+                var fBg    = (f.headerBg    && f.headerBg    !== '#ffffff') ? f.headerBg    : excelConfig.headerBg;
+                var fColor = (f.headerColor && f.headerColor !== '#000000') ? f.headerColor : excelConfig.headerColor;
+                var borda  = f.border !== false ? '1px solid #cbd5e1' : 'none';
+                return '<th style="background:' + fBg + ';color:' + fColor + ';font-size:' + excelConfig.headerFontSize +
+                    ';font-weight:bold;padding:6px 10px;border:' + borda + ';">' + (f.header || f.key) + '</th>';
+            }).join('');
+
+            var trRows = ST.registros.map(function(r, rowIdx) {
+                var linha = linhasMatriz[rowIdx];
+                var isExcRow = r.isExcecao === true;
+                var tds = camposAtivos.map(function(f, i) {
+                    var val   = linha[i];
+                    // Exceção: só coluna de valor unitário tem fundo diferenciado
+                    var isUnitCol = (f.key === 'freteUnitKg' || f.key === 'freteUnitCx');
+                    var dBg = (isExcRow && isUnitCol) ? '#e0f2fe'
+                            : ((f.dataBg && f.dataBg !== '#ffffff') ? f.dataBg : '');
+                    var borda = f.border !== false ? '1px solid #e2e8f0' : 'none';
+                    var style = 'padding:5px 10px;border:' + borda + ';font-size:' + dataFontSize + ';text-align:' + dataAlign + ';'
+                        + (dBg ? 'background:' + dBg + ';' : '');
+                    if (isMoeda[f.key]) {
+                        style += 'mso-number-format:"R\\#\\ ##0\\.00";text-align:right;';
+                    } else if (isPeso[f.key]) {
+                        style += 'text-align:right;';
+                    }
+                    return '<td style="' + style + '">' + val + '</td>';
+                }).join('');
+                return '<tr>' + tds + '</tr>';
+            }).join('');
+
+            var tbodyHtml = trRows;
+
+            if (excelConfig.showTotals) {
+                var keysToSum = { pesoKg: true, totalCx: true, valorNF: true, frete: true };
+                var totalsMap = {};
+                
+                ST.registros.forEach(r => {
+                    camposAtivos.forEach(f => {
+                        if (keysToSum[f.key]) {
+                            totalsMap[f.key] = (totalsMap[f.key] || 0) + parseFloat(r[f.key] || 0);
+                        }
+                    });
+                });
+
+                var totalBg    = excelConfig.totalBg    || '#f1f5f9';
+                var totalColor = excelConfig.totalColor || '#1e293b';
+                var totalFSize = excelConfig.totalFontSize || '11px';
+                var tdTotals = camposAtivos.map(function(f, idx) {
+                    var style = 'padding:5px 10px;border:1px solid #e2e8f0;font-weight:bold;background:'+totalBg+';color:'+totalColor+';font-size:'+totalFSize+';';
+                    if (keysToSum[f.key]) {
+                        var val = totalsMap[f.key];
+                        var strVal = '';
+                        if (isMoeda[f.key]) {
+                             style += 'mso-number-format:"R\\#\\ ##0\\.00";text-align:right;';
+                             strVal = formatarMoedaExport(val);
+                        } else if (f.key === 'pesoKg') {
+                             style += 'text-align:right;';
+                             strVal = formatarPeso(val);
+                        } else if (f.key === 'totalCx') {
+                             strVal = val.toFixed(0);
+                        }
+                        return '<td style="' + style + '">' + strVal + '</td>';
+                    } else {
+                        return '<td style="' + style + '">' + (idx === 0 ? 'TOTAIS GERAIS' : '') + '</td>';
+                    }
+                }).join('');
+                
+                tbodyHtml += '<tr>' + tdTotals + '</tr>';
+            }
+
+            var tabelaHtml =
+                '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">' +
+                '<head><meta charset="UTF-8">' +
+                '<style>table{border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px;}</style></head><body>' +
+                '<table>' +
+                (titleHtml ? '<thead>' + titleHtml + '<tr>' + thHtml + '</tr></thead>' : '<thead><tr>' + thHtml + '</tr></thead>') +
+                '<tbody>' + tbodyHtml + '</tbody>' +
+                '</table></body></html>';
+
+            var blobObjExcel = new Blob(['\uFEFF' + tabelaHtml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+            acionarDownloadDispositivo(blobObjExcel, 'relatorio_fretes_' + new Date().toISOString().slice(0,10) + '.xls');
+        }
+    }
+
+    function acionarDownloadDispositivo(blob, nomeArquivoCompleto) {
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = nomeArquivoCompleto;
+        link.click();
+    }
+
+    var _dragSrcIdx = null;
+
+    function renderExportFieldsConfig() {
+        var root = document.getElementById('cfg-export-fields-list');
+        if (!root) return;
+
+        root.innerHTML = exportFieldsConfig.map(function(f, idx) {
+            var def = EXPORT_FIELDS_DEFAULT.find(function(d){ return d.key === f.key; });
+            var label = def ? def.label : f.key;
+            var ordemNum = exportFieldsConfig.slice(0, idx).filter(function(x){ return x.ativo; }).length + (f.ativo ? 1 : 0);
+            var hBg    = f.headerBg    || '#1e40af';
+            var hColor = f.headerColor || '#ffffff';
+            var dBg    = f.dataBg      || '#ffffff';
+            var border = f.border !== false;
+            return (
+                '<div class="export-field-row" draggable="true"' +
+                ' data-idx="' + idx + '"' +
+                ' ondragstart="onExportDragStart(event, ' + idx + ')"' +
+                ' ondragover="onExportDragOver(event)"' +
+                ' ondrop="onExportDrop(event, ' + idx + ')"' +
+                ' ondragend="onExportDragEnd(event)"' +
+                ' ondragleave="onExportDragLeave(event)">' +
+                // arraste
+                '<span class="drag-handle"><i class="ti ti-grip-vertical"></i></span>' +
+                // numero de ordem
+                '<div class="field-order ' + (f.ativo ? '' : 'disabled') + '">' + (f.ativo ? ordemNum : '—') + '</div>' +
+                // toggle ativo + label
+                '<label style="display:flex; align-items:center; gap:7px; cursor:pointer; flex:0.3;">' +
+                    '<input type="checkbox" ' + (f.ativo ? 'checked' : '') + ' onchange="toggleExportField(' + idx + ', this.checked)">' +
+                    '<span class="field-label">' + label + '</span>' +
+                '</label>' +
+                // cabeçalho editável
+                '<div class="field-custom-label">' +
+                    '<input type="text" value="' + escHtml(f.header) + '" placeholder="' + (def ? def.defaultHeader : '') + '"' +
+                    ' title="Cabeçalho personalizado"' +
+                    ' oninput="atualizarHeaderExportField(' + idx + ', this.value)"' +
+                    (f.ativo ? '' : ' disabled') + '>' +
+                '</div>' +
+                // cor fundo cabeçalho
+                '<div class="field-color">' +
+                    '<label></label>' +
+                    '<input type="color" value="' + hBg + '" title="Cor de fundo deste cabeçalho"' +
+                    ' onchange="atualizarCorExportField(' + idx + ',\'headerBg\',this.value)">' +
+                '</div>' +
+                // cor fonte cabeçalho
+                '<div class="field-color">' +
+                    '<label></label>' +
+                    '<input type="color" value="' + hColor + '" title="Cor da fonte deste cabeçalho"' +
+                    ' onchange="atualizarCorExportField(' + idx + ',\'headerColor\',this.value)">' +
+                '</div>' +
+                // cor fundo dados
+                '<div class="field-color">' +
+                    '<label></label>' +
+                    '<input type="color" value="' + dBg + '" title="Cor de fundo das células de dados"' +
+                    ' onchange="atualizarCorExportField(' + idx + ',\'dataBg\',this.value)">' +
+                '</div>' +
+                // borda
+                '<div class="field-border">' +
+                    '<label></label>' +
+                    '<input type="checkbox" ' + (border ? 'checked' : '') + ' title="Exibir borda nesta coluna"' +
+                    ' onchange="atualizarCorExportField(' + idx + ',\'border\',this.checked)">' +
+                '</div>' +
+                '</div>'
+            );
+        }).join('');
+
+        atualizarPreviewExportacao();
+    }
+
+    function atualizarCorExportField(idx, campo, valor) {
+        exportFieldsConfig[idx][campo] = valor;
+    }
+
+    function escHtml(str) {
+        return String(str || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function toggleExportField(idx, ativo) {
+        exportFieldsConfig[idx].ativo = ativo;
+        renderExportFieldsConfig();
+    }
+    function atualizarHeaderExportField(idx, valor) {
+        exportFieldsConfig[idx].header = valor;
+        atualizarPreviewExportacao();
+    }
+
+    function atualizarPreviewExportacao() {
+        var ativos = exportFieldsConfig.filter(function(f){ return f.ativo; });
+        var count = document.getElementById('cfg-export-active-count');
+        if (count) count.textContent = ativos.length;
+        var preview = document.getElementById('cfg-export-preview');
+        if (!preview) return;
+        if (!ativos.length) {
+            preview.innerHTML = '<span style="font-size:11px; color:var(--color-text-muted); font-style:italic;">Nenhum campo ativo.</span>';
+            return;
+        }
+        preview.innerHTML = ativos.map(function(f, i) {
+            return '<span class="export-preview-badge"><span style="font-weight:700; color:var(--color-primary); margin-right:3px;">' + (i+1) + '</span>' + escHtml(f.header || f.key) + '</span>';
+        }).join('');
+    }
+
+    function salvarConfigExportacao() {
+        var inputs = document.querySelectorAll('#cfg-export-fields-list .field-custom-label input[type="text"]');
+        inputs.forEach(function(inp, i) {
+            if (exportFieldsConfig[i]) exportFieldsConfig[i].header = inp.value;
+        });
+        localStorage.setItem('fn_v4_export_fields', JSON.stringify(exportFieldsConfig));
+        renderExportFieldsConfig();
+        mostrarToast('Configuração de exportação salva com sucesso!');
+    }
+
+    function resetarConfigExportacao() {
+        if (!confirm('Restaurar configuração de exportação para o padrão original?')) return;
+        exportFieldsConfig = EXPORT_FIELDS_DEFAULT.map(function(f) {
+            return { key: f.key, ativo: f.defaultAtivo, header: f.defaultHeader };
+        });
+        localStorage.removeItem('fn_v4_export_fields');
+        renderExportFieldsConfig();
+    }
+
+    function onExportDragStart(e, idx) {
+        _dragSrcIdx = idx;
+        e.currentTarget.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+    }
+    function onExportDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        e.currentTarget.classList.add('drag-over');
+    }
+    function onExportDragLeave(e) {
+        e.currentTarget.classList.remove('drag-over');
+    }
+    function onExportDrop(e, targetIdx) {
+        e.preventDefault();
+        e.currentTarget.classList.remove('drag-over');
+        if (_dragSrcIdx === null || _dragSrcIdx === targetIdx) return;
+        var moved = exportFieldsConfig.splice(_dragSrcIdx, 1)[0];
+        exportFieldsConfig.splice(targetIdx, 0, moved);
+        _dragSrcIdx = null;
+        renderExportFieldsConfig();
+    }
+    function onExportDragEnd(e) {
+        e.currentTarget.classList.remove('dragging');
+        document.querySelectorAll('.export-field-row').forEach(function(r){ r.classList.remove('drag-over'); });
+        _dragSrcIdx = null;
+    }
+
+    function renderConfiguracoes() {
+        document.getElementById('cfg-p-nome').value = ST.rules.nome || 1;
+        document.getElementById('cfg-p-qtdcx').value = ST.rules.qtdcx || 2;
+        document.getElementById('cfg-p-pesocx').value = ST.rules.pesocx || 5;
+
+        document.getElementById('cfg-ex-bg').value = excelConfig.headerBg || '#1e40af';
+        document.getElementById('cfg-ex-color').value = excelConfig.headerColor || '#ffffff';
+        document.getElementById('cfg-ex-font').value = excelConfig.headerFontSize || '12px';
+        document.getElementById('cfg-ex-data-font').value = excelConfig.dataFontSize || '11px';
+        document.getElementById('cfg-ex-align').value = excelConfig.dataAlign || 'left';
+        document.getElementById('cfg-ex-totals').checked = excelConfig.showTotals !== false;
+        document.getElementById('cfg-ex-total-bg').value = excelConfig.totalBg || '#f1f5f9';
+        document.getElementById('cfg-ex-total-color').value = excelConfig.totalColor || '#1e293b';
+        document.getElementById('cfg-ex-total-font').value = excelConfig.totalFontSize || '11px';
+        document.getElementById('cfg-ex-title').value = excelConfig.titleText || '';
+        document.getElementById('cfg-ex-title-bg').value = excelConfig.titleBg || '#1e40af';
+        document.getElementById('cfg-ex-title-color').value = excelConfig.titleColor || '#ffffff';
+        document.getElementById('cfg-ex-title-font').value = excelConfig.titleFontSize || '16px';
+
+        renderExportFieldsConfig();
+
+        var rootT = document.getElementById('cfg-list-transportadoras');
+        if(!ST.transportadoras.length) {
+            rootT.innerHTML = '<div class="empty-view" style="padding:15px;">Nenhuma transportadora cadastrada no sistema.</div>';
+        } else {
+            rootT.innerHTML = ST.transportadoras.map(function(t) {
+                var excecoesHtml = '';
+                if(t.excecoesProdutos && t.excecoesProdutos.length > 0) {
+                    excecoesHtml = t.excecoesProdutos.map(function(exc, idx) {
+                        return '<div class="item-exc">' +
+                            '<span>Produto: <strong>' + exc.nomeProd + '</strong> · Modal: <strong>' + exc.tipoCobranca.toUpperCase() + '</strong> · Preço: <strong>R$ ' + parseFloat(exc.preco).toFixed(2) + '</strong>' + (exc.pesoMax > 0 ? ' · Peso máx: <strong>' + parseFloat(exc.pesoMax).toFixed(2) + ' kg</strong>' : '') + '</span>' +
+                            '<button class="btn sm danger" onclick="removerExcecaoProduto(\'' + t.id + '\', ' + idx + ')"><i class="ti ti-trash"></i></button>' +
+                            '</div>';
+                    }).join('');
+                } else {
+                    excecoesHtml = '<div style="font-size:11px; color:var(--color-text-muted); font-style:italic;">Sem exceções. Usa valor padrão.</div>';
+                }
+
+                return (
+                    '<div class="cards-transp">' +
+                        '<div class="list-transp">' +
+                            '<div style="font-size:13px;"><strong>' + t.nome + '</strong> <span style="color:var(--color-text-sub); margin-left:12px;">Padrão: R$ ' + parseFloat(t.pKg).toFixed(2) + '/Kg · R$ ' + parseFloat(t.pCx).toFixed(2) + '/Cx</span></div>' +
+                            '<button class="btn sm danger" onclick="removerTransportadora(\'' + t.id + '\')"><i class="ti ti-trash"></i> Remover Transportadora</button>' +
+                        '</div>' +
+                        '<div style="margin-left:10px; border-left:3px solid var(--color-border); padding-left:12px;">' +
+                            '<div class="list-exc">Exceções por Produto <i class="ti ti-info-circle" title="Sobrepõe o valor padrão caso o nome do produto na NF seja idêntico"></i></div>' +
+                            excecoesHtml +
+                        '</div>' +
+                    '</div>'
+                );
+            }).join('');
+        }
+
+        var optTransp = '<option value="PRIMEIRO">Transportadora...</option>';
+             ST.transportadoras.forEach(function(t) {
+                optTransp += '<option value="'+t.id+'">'+t.nome+'</option>';
+            });
+        document.getElementById('transpExc').innerHTML = optTransp;  
+
+        var rootD = document.getElementById('cfg-list-destinatarios');
+        var selCfgT = document.getElementById('cfg-d-transp');
+        if (selCfgT) {
+            selCfgT.innerHTML = '<option value="">Nenhuma</option>';
+            ST.transportadoras.forEach(function(t){ selCfgT.innerHTML += '<option value="'+t.id+'">'+t.nome+'</option>'; });
+        }
+        if(!ST.destinatarios.length) {
+            rootD.innerHTML = '<div class="empty-view" style="padding:15px;">Nenhuma regra customizada para destinatários.</div>';
+        } else {
+            rootD.innerHTML = ST.destinatarios.map(function(d) {
+                var txtMod = d.modal === 'kg' ? 'Por Peso Bruto (Kg)' : d.modal === 'cx' ? 'Por Caixa (Cx)' : 'Misto';
+                var tObj = ST.transportadoras.find(function(t){ return t.id === d.transpId; });
+                var transpLabel = tObj ? '🚚 '+tObj.nome : '';
+                return (
+                    '<div style="display:flex; justify-content:space-between; align-items:center; background:var(--color-bg-main); padding:8px 12px; border-radius:6px; margin-bottom:6px; font-size:12px;">' +
+                        '<div style="flex:1;">CNPJ/Nome: <strong>' + d.cnpj + '</strong> <span class="badge bg-xml" style="margin-left:8px;">' + txtMod + '</span> <span style="margin-left:8px; color:var(--color-primary);">' + transpLabel + '</span></div>' +
+                        '<button class="btn sm danger" onclick="removerRegraDestinatario(\'' + d.id + '\')"><i class="ti ti-trash"></i></button>' +
+                    '</div>'
+                );
+            }).join('');
+        }
+    }
+
+    function adicionarNovaTransportadora() {
+        var nome = document.getElementById('cfg-t-nome').value.trim();
+       
+        if (!nome) return alert('Informe o nome da transportadora.');
+         ST.transportadoras.push({
+            id: 't_' + Date.now(),
+            nome: nome,
+            pKg: document.getElementById('cfg-t-pkg').value || 0,
+            pCx: document.getElementById('cfg-t-pcx').value || 0,
+            excecoesProdutos: []
+        });
+
+        persistirDados();
+        document.getElementById('cfg-t-nome').value = '';
+        document.getElementById('cfg-t-pkg').value = '';
+        document.getElementById('cfg-t-pcx').value = '';
+        renderConfiguracoes();
+        renderLoteCompleto();
+        mostrarToast('Transportadora cadastrada com sucesso.');
+    }
+
+    function adicionarExcecao() {
+     
+        var nomeInput = document.getElementById('exc-nome-geral').value.trim();
+        var tipoCobranca = document.getElementById('exc-tipo-geral').value;
+        var precoInput = parseNumeroBR(document.getElementById('exc-preco-geral').value);
+
+        if(!nomeInput) return alert('Digite o nome do produto para a exceção.');
+
+        var transp = ST.transportadoras.find(t => t.id === document.getElementById('transpExc').value );
+        if(!transp) return;
+        if(!transp.excecoesProdutos) transp.excecoesProdutos = [];
+
+        
+        var pesoMaxInput = parseNumeroBR(document.getElementById('exc-pesomx-geral').value || '0');
+        var pesoExKg = parseNumeroBR(document.getElementById('exc-exckg-geral').value || '0');
+        
+        var existe = transp.excecoesProdutos.find(e => e.nomeProd.toLowerCase() === nomeInput.toLowerCase());
+        if(existe) {
+            existe.tipoCobranca = tipoCobranca;
+            existe.preco = precoInput;
+            existe.pesoMax = pesoMaxInput;
+        } else {
+            transp.excecoesProdutos.push({
+                nomeProd: nomeInput,
+                tipoCobranca: tipoCobranca,
+                preco: precoInput,
+                pesoMax: pesoMaxInput,
+                pesoRegra: pesoExKg
+        
+            });
+        }
+        
+        persistirDados();
+        renderConfiguracoes();
+        document.getElementById('transpExc').selectedIndex = 0;
+        document.getElementById('exc-nome-geral').value= null;
+        document.getElementById('exc-tipo-geral').selectedIndex = 0;
+        document.getElementById('exc-preco-geral').value = null;
+        document.getElementById('exc-pesomx-geral').value = null;
+        document.getElementById('exc-exckg-geral').value = null;
+        document.getElementById('transpExc').focus();
+        
+        mostrarToast('Exceção cadastrada com sucesso!');
+          
+    }
+      
+    function removerTransportadora(id) {
+        ST.transportadoras = ST.transportadoras.filter(t => t.id !== id);
+        persistirDados();
+        renderConfiguracoes();
+    }
+
+    function removerExcecaoProduto(idTransp, indexExcecao) {
+        var transp = ST.transportadoras.find(t => t.id === idTransp);
+        if(!transp || !transp.excecoesProdutos) return;
+        transp.excecoesProdutos.splice(indexExcecao, 1);
+        persistirDados();
+        renderConfiguracoes();
+    }
+
+    function adicionarRegraDestinatario() {
+        var chave = document.getElementById('cfg-d-chave').value.trim();
+        if(!chave) return alert('Informe o CNPJ ou Nome de identificação do cliente.');
+        ST.destinatarios.push({
+            id: 'd_' + Date.now(),
+            cnpj: chave,
+            transpId: document.getElementById('cfg-d-transp').value,
+            modal: document.getElementById('cfg-d-modal').value
+        });
+        persistirDados();
+        document.getElementById('cfg-d-chave').value = '';
+        renderConfiguracoes();
+        mostrarToast('Regra de cliente cadastrada.');
+    }
+
+    function removerRegraDestinatario(id) {
+        ST.destinatarios = ST.destinatarios.filter(d => d.id !== id);
+        persistirDados();
+        renderConfiguracoes();
+    }
+
+    function inicializarPressLongo() {
+        var colunas = ['data','nNF','fonte','destinatario','pesoKg','totalCx','valorNF','transportadora','frete','freteUnitKg','freteUnitCx'];
+        colunas.forEach(function(col) {
+            var th = document.getElementById('th-' + col);
+            if (!th) return;
+            th.addEventListener('click', function(){ if(!_copiouAgora) sortHist(col); _copiouAgora = false; });
+            th.addEventListener('mousedown', function(){ _pressTimer = setTimeout(function(){ _copiouAgora = true; copiarColuna(col); }, 1000); });
+            th.addEventListener('mouseup', function(){ clearTimeout(_pressTimer); });
+            th.addEventListener('mouseleave', function(){ clearTimeout(_pressTimer); });
+        });
+    }
+    
+    inicializarPressLongo();
+     
+    renderConfiguracoes();
+</script>
+</body>
+</html>
