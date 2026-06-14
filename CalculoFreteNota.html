@@ -72,7 +72,7 @@
         .btn.success:hover { background: var(--color-success-hover); }
         .btn.danger { background: var(--color-danger); color: #fff; border-color: var(--color-danger); }
         .btn.danger:hover { background: var(--color-danger-hover); }
-        .btn.sm { padding: 4px 8px;border-radius: 4px; }
+        .btn.sm { padding: 5px 8px;border-radius: 4px; }
 
         .alert { padding: 12px 16px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
         .alert-info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
@@ -107,8 +107,8 @@
         .input-edit { width: auto; padding: 5px 8px; border: 1px solid var(--color-border); border-radius: 4px; font-size: 12px; color: var(--color-text-main); font-family: var(--font-sans); }
         .input-edit:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 1px var(--color-primary); }
         .input-edit.menor{width: 48%}
-        .form-inline select.input-edit{ padding: 1.8%;}
 
+        
         .frete-calc-box { background: var(--color-bg-main); border-radius: 8px; padding: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; border: 1px solid var(--color-border-light); }
         
         .filters-row { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;padding: 0px 1% 0px 1%; }
@@ -130,7 +130,15 @@
         .cfg-grid-row { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; font-size: 12px; flex-wrap: wrap; }
         .cfg-grid-row input[type="number"] { width: 60px; padding: 4px 6px; border: 1px solid var(--color-border); border-radius: 4px; text-align: center; }
         .export-field-row label input, .export-field-row .field-border input[type=checkbox] {
-            appearance: none;width: 34px;height: 16px;background: #838383;border-radius: 999px;cursor: pointer;transition: 0.2s;position: relative;}
+            appearance: none;
+            width: 34px;
+            height: 16px;
+            background: #838383;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: 0.2s;
+            position: relative;
+        }
         
         .export-field-row label input::before, .export-field-row .field-border input[type=checkbox]:before {
             content: "";
@@ -148,7 +156,7 @@
         .export-field-row label input:checked::before, .export-field-row .field-border input[type=checkbox]:checked::before {transform: translateX(17px);}
 
         
-        .form-inline { height: stretch;background: var(--color-bg-sub);display: grid; gap: 10px; align-items: flex-end; width: 21%; border-radius: 8px; padding: 16px; border: 1px solid var(--color-border-light); }
+        .form-inline { height: stretch;background: var(--color-bg-sub);display: grid; gap: 10px; align-items: flex-end; width: 19%; border-radius: 8px; padding: 16px; border: 1px solid var(--color-border-light); }
         .form-group label { font-size: 11px; font-weight: 600; color: var(--color-text-sub); }
         .form-inline:has(+ #cfg-list-destinatarios) {background: 0; display: flex; border: 0; width: 80%;}
 
@@ -332,7 +340,7 @@
                             <select class="input-edit" id="transpExc"></select>
                             <input type="text" id="exc-nome-geral" class="input-edit" placeholder="Nome exato do produto">
                             <div>
-                                <select id="exc-tipo-geral" class="input-edit menor" >
+                                <select id="exc-tipo-geral" class="input-edit menor" style="padding: 1.55%;" >
                                     <option value="kg">Por Kg</option>
                                     <option value="cx">Por Cx</option>
                                 </select>
@@ -364,7 +372,7 @@
                         <input type="text" class="input-edit" id="cfg-d-chave" placeholder="Digite o CNPJ completo">
                         
                            <!-- <label>Modalidade Padrão</label>-->
-                            <select class="input-edit" id="cfg-d-modal">
+                            <select class="input-edit" id="cfg-d-modal" style="padding: 4px;">
                                 <option value="kg">Por Peso Bruto (Kg)</option>
                                 <option value="cx">Por Unidade de Caixa (Cx)</option>
                                 <option value="misto">Misto (Item a Item)</option>
@@ -372,9 +380,9 @@
                         
                         
                             <!-- <label>Transportadora Padrão</label> -->
-                            <select id="cfg-d-transp" class="input-edit"><option value="">Nenhuma</option></select>
+                            <select id="cfg-d-transp" class="input-edit" style="padding: 4px;"><option value="">Nenhuma</option></select>
                         
-                        <button class="btn primary" onclick="adicionarRegraDestinatario()"><i class="ti ti-plus"></i> Vincular Regra</button>
+                        <button class="btn sm primary" onclick="adicionarRegraDestinatario()"><i class="ti ti-plus"></i> Vincular Regra</button>
                     </div>
                     <div id="cfg-list-destinatarios"></div>
                 </div>
@@ -1434,6 +1442,7 @@
         var rootGridCards = document.getElementById('lote-cards-root');
         rootGridCards.innerHTML = '';
 
+       
         ST.lote.forEach(function(nf) {
             var aberto = (ST.idNotaSelecionadaLote === nf.id);
             var modalidadeCliente = nf.modalidadeCobranca || obterModalidadeCliente(nf.destCNPJ || nf.destNome);
@@ -1444,23 +1453,23 @@
             var totalCxNota = nf.itens.reduce(function(acc, i){ return acc + i.qtdcx; }, 0);
             var pesoTotal   = (nf.pesoCalculado > 0 ? nf.pesoCalculado : nf.pesoB);
 
-            var temItemSemPeso = nf.itens.some(function(it) {
-            var mod = (it.tipoCalculoItem || modalidadeCliente || 'kg')
-                        .replace(' (Exc)', '')
-                        .toLowerCase();
-            
-            if (mod === 'cx') {
-                // Caixa exige tanto qtdcx quanto pesocx
-                return !(it.qtdcx > 0) || !(it.pesocx > 0);
-            } else {
-                // Kg: só precisa ter algum peso — seja pesocx*qtdcx ou o pesoB da NF
-                var temPesoItem = (it.pesocx > 0);
-                var temPesoFallback = (nf.pesoB > 0);
-                return !temPesoItem && !temPesoFallback;
-            }
-        });
+            //temItemSemPeso = true;
+            temItemSemPeso = nf.itens.some(function(it) {
+                               
+                var mod = it.tipoCalculoItem.replace(' (Exc)', '').toLowerCase(); 
 
-            var statusOk = nf.itens.length > 0 && nf.freteCalculado > 0 && !temItemSemPeso;
+                if (mod === 'cx' ) { 
+                            return !(it.qtdcx > 0) ;                    
+                } else {
+                           let retorno =  (it.pesocx * it.qtdcx > 0 ); //(it.pesocx > 0) ? (it.qtdcx > 0) && (it.pesocx > 0):false ;
+                           
+                            return !(it.pesocx * it.qtdcx > 0 ) ; 
+                }
+                
+        });            
+
+            var statusOk = nf.itens.length > 0 && nf.freteCalculado > 0 && !temItemSemPeso ;
+           
             var statusBadge = statusOk
                 ? '<span class="badge bg-ok">Ok</span>'
                 : '<span class="badge bg-warn">Verificar</span>';
@@ -1717,24 +1726,25 @@
         cobrancaTipo = document.querySelector('#itens-tbody-' + nf.id +' tr:nth-of-type('+ (indexItem+1) +') td:nth-of-type(7)').textContent;
         
             // CONDIÇÕES PARA ENTRAR NO IF
-        c1 = cobrancaTipo === 'KG' || cobrancaTipo === 'AUTO';
-        c2 = nf.itens[indexItem] === ST.lote[0].itens[0];
+        c1 = nf.itens[indexItem] === ST.lote[0].itens[0];
+        c2 = campo === 'pesocx';
 
-        if(c1 && c2){
+        if(c1 && c2 ){
             abrirModal(
                 'ALTERAR KG / CX',
                 'Deseja alterar o peso por caixa de todos os itens em todas as notas ?',
                 function() { 
                     ST.lote.forEach(function(n) { //PARA ALTERAR TODOS OS PESOS DOS ITENS DO LOTE
                         n.itens.forEach(function(it) { 
-                            it.qtdcx = it.qtdOriginal / valor;
+                            it.qtdcx =  it.qtdOriginal / valor;
                             it.pesocx = valor
                         });
                     });
                 mostrarToast('\u2713 Conluído com sucesso. \n'+ (ST.lote.length > 1 ? 'Foram alteradas '+ ST.lote.length +' notas.': 'A nota foi alterada') );
             });  
 
-        }else{ if(campo === 'pesocx') nf.itens[indexItem].qtdcx = nf.itens[indexItem].qtdOriginal / valor;  };
+        }
+        if(campo === 'pesocx' &&  valor > 0) nf.itens[indexItem].qtdcx = nf.itens[indexItem].qtdOriginal / valor ; 
 
         processarCalculosDeFreteNota(idNota);
         renderLoteCompleto();
@@ -2456,13 +2466,21 @@
         var nome = document.getElementById('cfg-t-nome').value.trim();
        
         if (!nome) return alert('Informe o nome da transportadora.');
-         ST.transportadoras.push({
-            id: 't_' + Date.now(),
-            nome: nome,
-            pKg: document.getElementById('cfg-t-pkg').value || 0,
-            pCx: document.getElementById('cfg-t-pcx').value || 0,
-            excecoesProdutos: []
-        });
+
+
+        var existe = ST.transportadoras.find(e => e.nome.toLowerCase() === nome.toLowerCase());
+        if(existe) {
+            existe.pKg = document.getElementById('cfg-t-pkg').value || 0,
+            existe.pCx = document.getElementById('cfg-t-pcx').value || 0
+        } else {
+            ST.transportadoras.push({
+                id: 't_' + Date.now(),
+                nome: nome,
+                pKg: document.getElementById('cfg-t-pkg').value || 0,
+                pCx: document.getElementById('cfg-t-pcx').value || 0,
+                excecoesProdutos: []
+            });
+        }
 
         persistirDados();
         document.getElementById('cfg-t-nome').value = '';
