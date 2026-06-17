@@ -32,7 +32,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Preparar arquivo index
-        run: cp CalculoFreteNotas.html index.html
+        run: cp CalculoFreteNota.html index.html
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
