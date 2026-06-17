@@ -30,3 +30,30 @@ model NotaFiscal {
 
   @@map("notas_fiscais")
 }
+
+model Itens {
+  id            Int      @id @default(autoincrement())
+  notaFiscalId  Int
+  descricao     String
+  qtdOriginal    Int
+  unMedida      String
+  qtdcx         Int
+  peso          Float
+  precoCobrado Float
+  temExcecao    Boolean
+  tipoCalculoItem String
+   
+
+  @@map("itens")
+}
+
+
+
+
+
+
+ 
+
+
+
+
