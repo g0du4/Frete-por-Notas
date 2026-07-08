@@ -1,59 +1,40 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-
 }
 
-model NotaFiscal {
-  id            String      @id @default(uuid())
-  data          DateTime
-  nNF           Int
-  totalCx       Int         @default(0)
-  pesoKg        Float       @default(0)
-  frete         Float
-  freteUnitKg   Float
-  freteUnitCx   Float
-  fonte         String
-  destinatario   String
-  destCNPJ      String
-  valorNF       Float
-  transportadora String
-
-  @@map("notas_fiscais")
-}
-
-model Itens {
-  id            Int      @id @default(autoincrement())
-  notaFiscalId  Int
-  descricao     String
-  qtdOriginal    Int
-  unMedida      String
-  qtdcx         Int
-  peso          Float
-  precoCobrado Float
-  temExcecao    Boolean
+model itens {
+  id              Int           @id @default(autoincrement())
+  item            String
+  qtdOriginal     Int?
+  unMedida        String?
+  qtdcx           Int?
+  peso            Float?
+  precoCobrado    Float?   
+  temExcecao      Boolean @default(false)
   tipoCalculoItem String
-   
-
-  @@map("itens")
+  nNf             Int  
+  notaFiscalId    String  
+  notas_fiscais   notas_fiscais @relation(fields: [notaFiscalId], references: [id])
 }
 
-
-
-
-
-
- 
-
-
-
-
+model notas_fiscais {
+  id             String   @id @default(cuid())
+  data           DateTime
+  nNF            Int
+  totalCx        Int      @default(0)
+  pesoKg         Float    @default(0)
+  frete          Float
+  freteUnitKg    Float?
+  freteUnitCx    Float?
+  fonte          String?
+  destinatario   String?
+  destCNPJ       String
+  valorNF        Float?
+  transportadora String?
+  itens          itens[]
+}

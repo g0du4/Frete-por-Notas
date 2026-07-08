@@ -586,6 +586,7 @@
         idNotaSelecionadaLote: null
     };
 
+
     var excelConfig = JSON.parse(localStorage.getItem('fn_v4_excel_cfg') || '{"headerBg":"#1e40af","headerColor":"#ffffff","headerFontSize":"12px","dataFontSize":"11px","dataAlign":"left","showTotals":true,"totalBg":"#f1f5f9","totalColor":"#1e293b","totalFontSize":"11px"}');
     
     // VARIÁVEIS DE CONTEXTO DO MENU FLUTUANTE
@@ -601,7 +602,7 @@
         { key: 'freteUnitCx',   label: 'Frete por Cx (R$)', defaultHeader: 'Frete por Caixa',defaultAtivo: true  },
         { key: 'fonte',         label: 'Tipo (XML/PDF)',     defaultHeader: 'Fonte',          defaultAtivo: false },
         { key: 'emitente',      label: 'Emitente',          defaultHeader: 'Emitente',        defaultAtivo: false },
-        { key: 'destinatario',  label: 'Destinatário',      defaultHeader: 'Destinatario',    defaultAtivo: false },
+            { key: 'destinatario',  label: 'Destinatário',      defaultHeader: 'Destinatario',    defaultAtivo: false },
         { key: 'destCNPJ',      label: 'CNPJ Destinatário', defaultHeader: 'CNPJ',            defaultAtivo: false },
         { key: 'valorNF',       label: 'Valor da NF (R$)',  defaultHeader: 'Valor NF',        defaultAtivo: false },
         { key: 'transportadora',label: 'Transportadora',    defaultHeader: 'Transportadora',  defaultAtivo: false }
@@ -1840,7 +1841,56 @@
         exibirAlertaGlobal('import-alert', "Sucesso! " + contagemSalvos + " notas fiscais foram processadas e salvas no histórico definitivo.", 'success');
     }
 
-    function renderHistoricoCompleto() {
+            //INCLUSÃO NO BANCO TESTE INICIAL
+      async function enviarParaServidor() {
+        for (const nf of ST.lote) {
+            
+            const dados = {
+                data: nf.dataStr,
+                nNF: nf.nNF,
+                frete: nf.freteCalculado,
+                destinatario: nf.destNome,
+                destCNPJ: nf.destCNPJ,
+                valorNF: nf.vNF,
+                transportadora: nf.transpNome || 'Sem Transportadora',
+                fonte: nf.fonte,
+                totalCx: nf.totalCx,
+                pesoKg: nf.pesoCalculado,
+                freteUnitKg: nf.freteUnitKg , 
+                freteUnitCx: nf.freteUnitCx ,
+            };
+
+            const resposta = await fetch('http://localhost:3000/salvar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dados),
+            });
+             
+            const resultado = await resposta.json();
+            console.log(resultado);
+        }
+
+        mostrarToast('Dados enviados para o servidor com sucesso!');
+        const resposta = await fetch('http://localhost:3000/dados');
+        console.table(await resposta.json());
+}
+
+    
+
+    async function renderHistoricoCompleto() {
+        
+        
+    try {
+        // 1. Busca os dados da sua API/Banco
+        const resposta = await fetch('http://localhost:3001/dados');
+        const dadosDB = await resposta.json();
+        console.log(dadosDB);
+         } catch (err) {
+        console.error("Erro ao buscar histórico:", err);
+        await resposta.json();
+        
+    }
+        
         var selectFiltro = document.getElementById('filter-transp');
         var valorSelecionadoPreviamente = selectFiltro.value;
         
