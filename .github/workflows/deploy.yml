@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - run: cp seu-arquivo.html index.html
+      - run: cp CalculoFreteNota.html index.html
 
       - uses: actions/upload-pages-artifact@v3
         with:
