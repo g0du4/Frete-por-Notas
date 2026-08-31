@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Renomear arquivo para index na publicação
-        run: cp CalculoFreteNota.html index.html # Altere "seu-arquivo.html" para o seu arquivo real
+        run: cp CalculoFreteNota.html index.html
 
       - name: Configurar Pages
         uses: actions/configure-pages@v4
