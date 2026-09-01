@@ -13,6 +13,7 @@
 </head>
 <body>
 
+
 <div class="modal-overlay" id="modal-confirm-overlay">
   <div class="modal-box">
     <div class="modal-icon"><i class="ti ti-alert-triangle"></i></div>
@@ -80,6 +81,7 @@
                 <div class="tabs">
                     <button class="tab active" id="btn-view-nota" onclick="alternarVisaoHistorico('nota')"><i class="ti ti-list"></i> Por Nota</button>
                     <button class="tab" id="btn-view-produto" onclick="alternarVisaoHistorico('produto')"><i class="ti ti-box-seam"></i> Por Produto</button>
+                    <button class="tab" id="btn-view-loja" onclick="alternarVisaoHistorico('loja')"><i class="ti ti-building-store"></i> Distribuição por Loja</button>
                 </div>
                 <div id="produto-view-controls" style="display:none; gap:8px; align-items:center; flex-wrap:wrap;">
                     <select id="prod-view-unidade" class="input-edit" onchange="renderHistoricoFiltrado()">
@@ -144,6 +146,7 @@
                 <div id="hist-empty" class="empty-view" style="display:none;"><i class="ti ti-inbox"></i>Nenhum registro encontrado para os filtros informados.</div>
             </div>
             <div id="view-por-produto" style="display:none;"></div>
+            <div id="view-por-loja" style="display:none;"></div>
         </div>
 
         <div class="panel" id="panel-config">
@@ -398,6 +401,7 @@
         <button class="btn sm" style="justify-content:flex-start;" onclick="execFloatTransp('apenas')"><i class="ti ti-file-check"></i> Apenas esta nota</button>
     </div>
 </div>
+
 <script src="script.js"></script>
 </body>
 </html>

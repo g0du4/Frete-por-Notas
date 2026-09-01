@@ -1,5 +1,4 @@
-
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
     var ST = {
         transportadoras: JSON.parse(localStorage.getItem('fn_v4_transp') || '[]'),
@@ -1537,6 +1536,10 @@ async function executarParsePDF(arrayBuffer, nomeArquivo) {
             renderVisaoPorProduto(filtrados);
             return;
         }
+        if (histVisaoAtual === 'loja') {
+            renderVisaoPorLoja(filtrados);
+            return;
+        }
 
         var tbody = document.getElementById('hist-table-tbody');
         tbody.innerHTML = '';
@@ -1633,9 +1636,11 @@ async function executarParsePDF(arrayBuffer, nomeArquivo) {
         histVisaoAtual = modo;
         document.getElementById('btn-view-nota').classList.toggle('active', modo === 'nota');
         document.getElementById('btn-view-produto').classList.toggle('active', modo === 'produto');
+        document.getElementById('btn-view-loja').classList.toggle('active', modo === 'loja');
         document.getElementById('view-por-nota').style.display = modo === 'nota' ? '' : 'none';
         document.getElementById('view-por-produto').style.display = modo === 'produto' ? '' : 'none';
-        document.getElementById('produto-view-controls').style.display = modo === 'produto' ? 'flex' : 'none';
+        document.getElementById('view-por-loja').style.display = modo === 'loja' ? '' : 'none';
+        document.getElementById('produto-view-controls').style.display = (modo === 'produto' || modo === 'loja') ? 'flex' : 'none';
         renderHistoricoFiltrado();
     }
 
@@ -1898,6 +1903,90 @@ async function executarParsePDF(arrayBuffer, nomeArquivo) {
                 }
             } else {
                 var agregado = agregarItensPorProduto(regsTransp);
+
+                if (!agregado.normal.length && !agregado.excecao.length) {
+                    html += '<div class="empty-view" style="padding:16px;"><i class="ti ti-inbox"></i>Nenhum item estruturado salvo para estas notas.</div>';
+                    return;
+                }
+
+                html += renderBlocoProdutos(agregado.normal, unidade, detalhe, false);
+
+                if (agregado.excecao.length) {
+                    html += '<div style="font-size:11px;font-weight:700;color:#92400e;margin:10px 0 4px;">⚡ Itens em Exceção (somatórias)</div>';
+                    html += renderBlocoProdutos(agregado.excecao, unidade, detalhe, true);
+                }
+            }
+        });
+
+        container.innerHTML = html;
+    }
+
+    // Monta a visão "Distribuição por Loja": agrupa os registros pelo nome do
+    // destinatário (loja) e, dentro de cada loja, soma todos os produtos iguais
+    // em uma tabela (mesma lógica de agregação usada na visão "Por Produto",
+    // só que a chave de agrupamento passa a ser a loja em vez da transportadora).
+    function renderVisaoPorLoja(filtrados) {
+        var container = document.getElementById('view-por-loja');
+        var unidade = document.getElementById('prod-view-unidade').value;
+        var modo = document.getElementById('prod-view-modo').value;
+        var detalhe = document.getElementById('prod-view-detalhe').value;
+
+        if (!filtrados.length) {
+            container.innerHTML = '<div class="empty-view"><i class="ti ti-inbox"></i>Nenhum registro encontrado para os filtros informados.</div>';
+            return;
+        }
+
+        var mapaLoja = {};
+        var ordemLoja = [];
+        filtrados.forEach(function(r) {
+            var loja = r.destinatario || 'Sem Destinatário';
+            if (!mapaLoja[loja]) { mapaLoja[loja] = []; ordemLoja.push(loja); }
+            mapaLoja[loja].push(r);
+        });
+
+        ordemLoja.sort(function(a, b) { return a.toLowerCase().localeCompare(b.toLowerCase()); });
+
+        var html = '';
+
+        ordemLoja.forEach(function(nomeLoja, idxLoja) {
+            var regsLoja = mapaLoja[nomeLoja];
+
+            var pesoLoja = 0, cxLoja = 0, freteLoja = 0;
+            regsLoja.forEach(function(r) {
+                pesoLoja += (parseFloat(r.pesoKg) || 0);
+                cxLoja += (parseFloat(r.totalCx) || 0);
+                freteLoja += (parseFloat(r.frete) || 0);
+            });
+
+            html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin:18px 0 8px;padding-bottom:6px;border-bottom:2px solid var(--color-primary);flex-wrap:wrap;">' +
+                        '<div style="display:flex;align-items:center;gap:8px;">' +
+                            '<i class="ti ti-building-store" style="color:var(--color-primary);"></i>' +
+                            '<span style="font-size:13px;font-weight:700;color:var(--color-primary);">' + nomeLoja + '</span>' +
+                            '<span style="font-size:11px;color:var(--color-text-muted);">(' + regsLoja.length + ' nota' + (regsLoja.length > 1 ? 's' : '') + ')</span>' +
+                        '</div>' +
+                        '<div style="display:flex;gap:14px;font-size:11px;color:var(--color-text-sub);">' +
+                            '<span><b>' + formatarPeso(pesoLoja) + ' kg</b></span>' +
+                            '<span><b>' + cxLoja.toFixed(0) + ' cx</b></span>' +
+                            '<span style="color:var(--color-success);"><b>' + formatarMoeda(freteLoja) + '</b></span>' +
+                        '</div>' +
+                    '</div>';
+
+            if (modo === 'data') {
+                var agregadoData = agregarPorData(regsLoja);
+
+                if (!agregadoData.normal.length && !agregadoData.excecao.length) {
+                    html += '<div class="empty-view" style="padding:16px;"><i class="ti ti-inbox"></i>Nenhum item estruturado salvo para estas notas.</div>';
+                    return;
+                }
+
+                html += renderBlocoPorData(agregadoData.normal, unidade, detalhe, false, 'pl-' + idxLoja + '-n');
+
+                if (agregadoData.excecao.length) {
+                    html += '<div style="font-size:11px;font-weight:700;color:#92400e;margin:10px 0 4px;">⚡ Itens em Exceção (somatórias por data)</div>';
+                    html += renderBlocoPorData(agregadoData.excecao, unidade, detalhe, true, 'pl-' + idxLoja + '-e');
+                }
+            } else {
+                var agregado = agregarItensPorProduto(regsLoja);
 
                 if (!agregado.normal.length && !agregado.excecao.length) {
                     html += '<div class="empty-view" style="padding:16px;"><i class="ti ti-inbox"></i>Nenhum item estruturado salvo para estas notas.</div>';
