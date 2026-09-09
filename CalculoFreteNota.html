@@ -702,14 +702,14 @@
     document.addEventListener('DOMContentLoaded', configurarCampoChaveParaCelular);
 
     // ===================================================================
-    // API DANFE RÁPIDA — busca de NF-e pela chave de acesso
+    // BUSCA DE NF-e PELA CHAVE DE ACESSO
     // ===================================================================
-    // ATENÇÃO — TEMPORÁRIO: a chave está direto no código pra facilitar o
-    // teste do leitor de código de barras sem precisar do servidor local.
-    // Isso expõe a chave pra qualquer um que ver o código-fonte da página —
-    // principalmente arriscado se este repositório do GitHub for público.
-    // Antes de deixar isso em produção, trocar pelo fluxo via server.js.
-    var DANFERAPIDA_API_KEY = 'dr_live_2a80cfcb3740e38488b725e382bc371dbacbe15043bbf8bb58f1f63923ec83a4';
+    // A API da Danfe Rápida bloqueia chamadas diretas do navegador (CORS
+    // não libera o header x-api-key vindo de um site). Por isso quem
+    // chama a API é o backend hospedado no Render — troque a URL abaixo
+    // pela URL real do seu serviço depois do deploy (ex:
+    // https://seu-app.onrender.com).
+    var URL_BACKEND = 'https://TROQUE_PELA_SUA_URL.onrender.com';
 
     var ST = {
         transportadoras: JSON.parse(localStorage.getItem('fn_v4_transp') || '[]'),
@@ -1000,31 +1000,27 @@
         toggleVisibilidadeCarregamento(true, 'Consultando NF-e pela chave de acesso...');
 
         try {
-            var resposta = await fetch('https://api.danferapida.com.br/documents/b2b/search/' + chave, {
-                method: 'GET',
-                headers: {
-                    'x-api-key': DANFERAPIDA_API_KEY,
-                    'Content-Type': 'application/json'
-                }
+            var resposta = await fetch(URL_BACKEND + '/api/consultar-nfe/' + chave, {
+                method: 'GET'
             });
 
             var corpo = await resposta.json().catch(function() { return null; });
 
             if (!resposta.ok) {
-                var msgErro = (corpo && (corpo.message || corpo.erro)) || ('Erro HTTP ' + resposta.status);
+                var msgErro = (corpo && corpo.erro) || ('Erro HTTP ' + resposta.status);
                 exibirAlertaGlobal('import-alert', 'Não foi possível consultar essa NF-e: ' + msgErro, 'error');
                 return;
             }
 
-            if (!corpo || !corpo.xmlCode) {
-                exibirAlertaGlobal('import-alert', 'A API respondeu, mas a resposta não veio com o XML esperado.', 'error');
+            if (!corpo || !corpo.xml) {
+                exibirAlertaGlobal('import-alert', 'O servidor respondeu, mas a resposta não veio com o XML esperado.', 'error');
                 return;
             }
 
             // Mesma função usada para arquivos .xml enviados manualmente —
             // ela já extrai tudo (emitente, destinatário, itens, pesos) e
             // adiciona a nota em ST.lote.
-            executarParseXML(corpo.xmlCode, 'NFe_' + chave + '.xml');
+            executarParseXML(corpo.xml, 'NFe_' + chave + '.xml');
 
             if (ST.lote.length > 0) {
                 ST.idNotaSelecionadaLote = ST.lote[0].id;
@@ -1034,7 +1030,7 @@
             input.value = '';
             mostrarToast('NF-e encontrada e adicionada ao lote.');
         } catch (e) {
-            exibirAlertaGlobal('import-alert', 'Falha ao consultar a API (provavelmente bloqueio de CORS — esperado por enquanto): ' + e.message, 'error');
+            exibirAlertaGlobal('import-alert', 'Não foi possível falar com o backend em ' + URL_BACKEND + '. Ele pode estar "acordando" (demora ~1min na primeira vez) — tente de novo em instantes.', 'error');
         } finally {
             toggleVisibilidadeCarregamento(false);
         }
