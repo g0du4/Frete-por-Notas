@@ -1,7 +1,8 @@
 // Mesma lógica de extração blindada que já existia no viewer.js da extensão,
 // só que reaproveitada aqui no backend.
+// Versão ES Module (import/export) — compatível com projetos que usam "type": "module".
 
-function extrairDadosDoXml(xmlTexto) {
+export function extrairDadosDoXml(xmlTexto) {
     let nomeDestinatario = 'Destinatário não encontrado';
     let listaItens = [];
 
@@ -44,5 +45,3 @@ function extrairDadosDoXml(xmlTexto) {
 
     return { destinatario: nomeDestinatario, itens: listaItens };
 }
-
-module.exports = { extrairDadosDoXml };

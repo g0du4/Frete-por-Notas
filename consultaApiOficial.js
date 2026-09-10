@@ -1,15 +1,16 @@
 // Consulta direta na API oficial da Danfe Rápida — sem navegador, sem automação.
 // Documentação: https://danferapida.com.br/integracao
+// Versão ES Module (import/export) — compatível com projetos que usam "type": "module".
 
 const BASE_URL = 'https://api.danferapida.com.br';
 
-async function consultarNFePorChave(chave) {
+export async function consultarNFePorChave(chave) {
     const apiKey = process.env.DANFERAPIDA_API_KEY;
 
     if (!apiKey) {
         return {
             sucesso: false,
-            erro: 'Variável de ambiente DANFERAPIDA_API_KEY não definida. Rode "set DANFERAPIDA_API_KEY=SUA_CHAVE" antes.',
+            erro: 'Variável de ambiente DANFERAPIDA_API_KEY não definida. Rode "export DANFERAPIDA_API_KEY=SUA_CHAVE" antes.',
         };
     }
 
@@ -47,5 +48,3 @@ async function consultarNFePorChave(chave) {
         return { sucesso: false, erro: `Falha de rede: ${e.message}` };
     }
 }
-
-module.exports = { consultarNFePorChave };

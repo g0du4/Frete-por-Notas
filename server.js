@@ -1,7 +1,7 @@
-const express = require('express');
-const cors = require('cors');
-const { consultarNFePorChave } = require('./consultaApiOficial');
-const { extrairDadosDoXml } = require('./extrairDados');
+import express from 'express';
+import cors from 'cors';
+import { consultarNFePorChave } from './consultaApiOficial.js';
+import { extrairDadosDoXml } from './extrairDados.js';
 
 const app = express();
 app.use(cors());
