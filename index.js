@@ -30,4 +30,3 @@ app.get('/dados', async (req, res) => {
   res.json(dados);
 });
 
-app.listen(3001);
