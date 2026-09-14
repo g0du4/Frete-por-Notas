@@ -709,7 +709,7 @@
     // chama a API é o backend hospedado no Render — troque a URL abaixo
     // pela URL real do seu serviço depois do deploy (ex:
     // https://seu-app.onrender.com).
-    var URL_BACKEND = 'https://nfe-fretenota.godois98.workers.dev';
+    var URL_BACKEND = 'https://bdaivencloud.godois98.workers.dev';
 
     var ST = {
         transportadoras: JSON.parse(localStorage.getItem('fn_v4_transp') || '[]'),
@@ -3526,17 +3526,11 @@ function formatarDataDBParaTela(dataISO) {
     renderConfiguracoes();
 </script>
 <script>
-  const URL_BDAIVEN = 'https://bdaivencloud.godois98.workers.dev'; // pega essa URL depois do wrangler deploy
-
-    fetch(`${URL_BDAIVEN}/notas-fiscais`)
-    .then(resposta => resposta.json())
-    .then(dados => console.log(dados))
-    .catch(erro => console.error('Erro ao buscar dados:', erro));
-
+  //const URL_BACKEND = 'https://bdaivencloud.godois98.workers.dev'; // pega essa URL depois do wrangler deploy
 
   // Buscar e listar as notas fiscais
   async function carregarNotas() {
-    const resposta = await fetch(`${URL_BDAIVEN}/notas-fiscais`);
+    const resposta = await fetch(`${URL_BACKEND}/notas-fiscais`);
     const notas = await resposta.json();
     console.log(notas); // aqui você monta a tabela/lista na tela
   }
@@ -3557,7 +3551,7 @@ function formatarDataDBParaTela(dataISO) {
       ],
     };
 
-    const resposta = await fetch(`${URL_BDAIVEN}/notas-fiscais`, {
+    const resposta = await fetch(`${URL_BACKEND}/notas-fiscais`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(novaNota),
