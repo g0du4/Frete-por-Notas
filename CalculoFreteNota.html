@@ -3525,5 +3525,49 @@ function formatarDataDBParaTela(dataISO) {
      
     renderConfiguracoes();
 </script>
+<script>
+  const URL_BACKEND = 'https://bdaivencloud.godois98.workers.dev'; // pega essa URL depois do wrangler deploy
+
+    fetch(`${URL_BACKEND}/notas-fiscais`)
+    .then(resposta => resposta.json())
+    .then(dados => console.log(dados))
+    .catch(erro => console.error('Erro ao buscar dados:', erro));
+
+
+  // Buscar e listar as notas fiscais
+  async function carregarNotas() {
+    const resposta = await fetch(`${URL_BACKEND}/notas-fiscais`);
+    const notas = await resposta.json();
+    console.log(notas); // aqui você monta a tabela/lista na tela
+  }
+
+  // Cadastrar uma nova nota fiscal
+  async function cadastrarNota() {
+    const novaNota = {
+      data: '2026-09-14',
+      nNF: 12345,
+      totalCx: 10,
+      pesoKg: 120.5,
+      frete: 350.0,
+      destinatario: 'Cliente Exemplo',
+      destCNPJ: '00.000.000/0001-00',
+      transportadora: 'Transportadora X',
+      itens: [
+        { item: 'Caixa de parafusos', qtdOriginal: 100, unMedida: 'un', qtdcx: 10, peso: 5.2, precoCobrado: 25.0, tipoCalculoItem: 'peso', nNf: 12345 }
+      ],
+    };
+
+    const resposta = await fetch(`${URL_BACKEND}/notas-fiscais`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(novaNota),
+    });
+
+    const resultado = await resposta.json();
+    console.log(resultado);
+  }
+
+  carregarNotas();
+</script>
 </body>
 </html>
