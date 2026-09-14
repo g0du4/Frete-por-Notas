@@ -3526,9 +3526,9 @@ function formatarDataDBParaTela(dataISO) {
     renderConfiguracoes();
 </script>
 <script>
-  const URL_BACKEND = 'https://bdaivencloud.godois98.workers.dev'; // pega essa URL depois do wrangler deploy
+  const URL_BDAIVEN = 'https://bdaivencloud.godois98.workers.dev'; // pega essa URL depois do wrangler deploy
 
-    fetch(`${URL_BACKEND}/notas-fiscais`)
+    fetch(`${URL_BDAIVEN}/notas-fiscais`)
     .then(resposta => resposta.json())
     .then(dados => console.log(dados))
     .catch(erro => console.error('Erro ao buscar dados:', erro));
@@ -3536,7 +3536,7 @@ function formatarDataDBParaTela(dataISO) {
 
   // Buscar e listar as notas fiscais
   async function carregarNotas() {
-    const resposta = await fetch(`${URL_BACKEND}/notas-fiscais`);
+    const resposta = await fetch(`${URL_BDAIVEN}/notas-fiscais`);
     const notas = await resposta.json();
     console.log(notas); // aqui você monta a tabela/lista na tela
   }
@@ -3557,7 +3557,7 @@ function formatarDataDBParaTela(dataISO) {
       ],
     };
 
-    const resposta = await fetch(`${URL_BACKEND}/notas-fiscais`, {
+    const resposta = await fetch(`${URL_BDAIVEN}/notas-fiscais`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(novaNota),
