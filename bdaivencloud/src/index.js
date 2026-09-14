@@ -2,7 +2,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../generated/prisma/index.js';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://g0du4.github.io/Frete-por-Notas/', // troque pelo seu domínio do GitHub Pages
+  'Access-Control-Allow-Origin': 'https://g0du4.github.io', // troque pelo seu domínio do GitHub Pages
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
