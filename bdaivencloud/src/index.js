@@ -1,5 +1,5 @@
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '../generated/prisma/index.js';
+import { PrismaClient } from '../../generated/prisma/index.js';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': 'https://g0du4.github.io', // ajuste pro seu domínio real do GitHub Pages
