@@ -1,15 +1,10 @@
 {
-  "type": "module",
   "devDependencies": {
-    "prisma": "^6.19.0",
-    "wrangler": "^4.131.2"
+    "dotenv-cli": "^11.0.0",
+    "prisma": "^7.10.0"
   },
   "dependencies": {
-    "@prisma/adapter-pg": "^6.19.0",
-    "@prisma/client": "^6.19.0",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "pg": "^8.23.0",
-    "postgres": "^3.4.9"
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0"
   }
 }

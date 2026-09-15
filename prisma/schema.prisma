@@ -1,12 +1,11 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
   output   = "../generated/prisma"
-  engineType = "client"
+  runtime  = "cloudflare"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model itens {
@@ -16,11 +15,11 @@ model itens {
   unMedida        String?
   qtdcx           Int?
   peso            Float?
-  precoCobrado    Float?   
+  precoCobrado    Float?
   temExcecao      Boolean @default(false)
   tipoCalculoItem String
-  nNf             Int  
-  notaFiscalId    String  
+  nNf             Int
+  notaFiscalId    String
   notas_fiscais   notas_fiscais @relation(fields: [notaFiscalId], references: [id])
 }
 

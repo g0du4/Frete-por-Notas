@@ -1,5 +1,5 @@
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '../../generated/prisma/index.js';
+import { PrismaClient } from '../../generated/prisma/client.js';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': 'https://g0du4.github.io', // ajuste pro seu domínio real do GitHub Pages
@@ -25,8 +25,8 @@ export default {
     if (url.pathname === '/notas-fiscais') {
       return handleNotasFiscais(request, env, ctx);
     }
-
-    return jsonResponse({ sucesso: false, erro: 'Rota não encontrada' }, 404);
+    
+    return jsonResponse({ sucesso: false, erro: 'Rota não encontradaaaaaaaaaaaaa' }, 404);
   },
 };
 
