@@ -919,7 +919,7 @@
         document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
         if(event) event.target.closest('.tab').classList.add('active');
         document.getElementById('panel-' + tabId).classList.add('active');
-        if (tabId === 'historico') { renderHistoricoCompleto();/* carregarHistoricoDoBanco(); */ }
+        if (tabId === 'historico') { carregarHistoricoDoBanco();/*  renderHistoricoCompleto(); */ }
         if (tabId === 'config') { renderConfiguracoes(); }
     }
 
@@ -2212,7 +2212,7 @@ async function executarParsePDF(arrayBuffer, nomeArquivo) {
             }
 
              
-           const resposta = await fetch('http://localhost:3000/salvar', {
+           const resposta = await fetch(`${URL_BACKEND}/notas-fiscais`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(dados)
@@ -2776,8 +2776,12 @@ async function executarParsePDF(arrayBuffer, nomeArquivo) {
 async function carregarHistoricoDoBanco() {
     try {
         // 1. Busca os dados da sua API/Banco
-        const resposta = await fetch('http://localhost:3000/dados');
+        const resposta = await fetch(`${URL_BACKEND}/notas-fiscais`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        });
         const dadosDB = await resposta.json();
+        console.log("Dados carregados do banco:", dadosDB);
 
         // 2. Mapeia os campos do banco para o padrão do ST.registros
         ST.registros = dadosDB.map(nota => {
@@ -2859,7 +2863,7 @@ function formatarDataDBParaTela(dataISO) {
 
         try {
             
-          const resposta = await fetch('http://localhost:3000/deletar', {
+          const resposta = await fetch(`${URL_BACKEND}/notas-fiscais`, {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id: idReg })
@@ -3526,32 +3530,19 @@ function formatarDataDBParaTela(dataISO) {
     renderConfiguracoes();
 </script>
 <script>
-  //const URL_BACKEND = 'https://bdaivencloud.godois98.workers.dev'; // pega essa URL depois do wrangler deploy
+ 
 
   // Buscar e listar as notas fiscais
   async function carregarNotas() {
     const resposta = await fetch(`${URL_BACKEND}/notas-fiscais`);
     const notas = await resposta.json();
-    console.log(notas); // aqui você monta a tabela/lista na tela
+    console.log(notas); 
   }
 
   // Cadastrar uma nova nota fiscal
   async function cadastrarNota() {
-    const novaNota = {
-      data: '2026-09-14',
-      nNF: 12345,
-      totalCx: 10,
-      pesoKg: 120.5,
-      frete: 350.0,
-      destinatario: 'Cliente Exemplo',
-      destCNPJ: '00.000.000/0001-00',
-      transportadora: 'Transportadora X',
-      itens: [
-        { item: 'Caixa de parafusos', qtdOriginal: 100, unMedida: 'un', qtdcx: 10, peso: 5.2, precoCobrado: 25.0, tipoCalculoItem: 'peso', nNf: 12345 }
-      ],
-    };
 
-    const resposta = await fetch(`${URL_BACKEND}/notas-fiscais`, {
+    const resposta = await fetch(`${URL_BACKEND}/cadastrar-nota`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(novaNota),
@@ -3560,8 +3551,6 @@ function formatarDataDBParaTela(dataISO) {
     const resultado = await resposta.json();
     console.log(resultado);
   }
-
-  carregarNotas();
 </script>
 </body>
 </html>

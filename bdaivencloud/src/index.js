@@ -162,6 +162,33 @@ async function handleNotasFiscais(request, env, ctx) {
       return jsonResponse(novaNota, 201);
     }
 
+    if (request.method === 'DELETE') {
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get('id');
+
+  if (!id) {
+    return jsonResponse({ erro: 'ID da nota fiscal é obrigatório' }, 400);
+  }
+
+  try {
+    // Deleta os itens relacionados primeiro (evita erro de FK)
+    await prisma.itens.deleteMany({
+      where: { nota_fiscal_id: Number(id) },
+    });
+
+    const notaDeletada = await prisma.notas_fiscais.delete({
+      where: { id: Number(id) },
+    });
+
+    return jsonResponse({ mensagem: 'Nota fiscal deletada com sucesso', notaDeletada });
+  } catch (erro) {
+    if (erro.code === 'P2025') {
+      return jsonResponse({ erro: 'Nota fiscal não encontrada' }, 404);
+    }
+    return jsonResponse({ erro: 'Erro ao deletar nota fiscal' }, 500);
+  }
+}
+
     return jsonResponse({ erro: 'Método não suportado nessa rota' }, 405);
   } finally {
     ctx.waitUntil(prisma.$disconnect());
