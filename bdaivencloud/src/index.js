@@ -166,7 +166,7 @@ async function handleNotasFiscais(request, env, ctx) {
     if (request.method === 'DELETE') {
       
       const body = await request.json().catch(() => null);
-      console.log('Body recebido:', JSON.stringify(body.id));
+      console.log('Body recebido:', body.id);
       const id = body?.id;
 
   if (!id) {
@@ -176,11 +176,11 @@ async function handleNotasFiscais(request, env, ctx) {
   try {
     // Deleta os itens relacionados primeiro (evita erro de FK)
     await prisma.itens.deleteMany({
-      where: { nota_fiscal_id: Number(id) },
+      where: { nota_fiscal_id: id },
     });
 
     const notaDeletada = await prisma.notas_fiscais.delete({
-      where: { id: Number(id) },
+      where: { id: id },
     });
 
     return jsonResponse({ mensagem: 'Nota fiscal deletada com sucesso', notaDeletada });
