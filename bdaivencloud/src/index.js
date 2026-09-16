@@ -166,7 +166,7 @@ async function handleNotasFiscais(request, env, ctx) {
     if (request.method === 'DELETE') {
       
       const body = await request.json().catch(() => null);
-      console.log('Body recebido:', JSON.stringify(body));
+      console.log('Body recebido:', JSON.stringify(body.id));
       const id = body?.id;
 
   if (!id) {
