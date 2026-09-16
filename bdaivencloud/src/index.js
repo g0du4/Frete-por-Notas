@@ -3,7 +3,7 @@ import { PrismaClient } from '../../generated/prisma/client.js';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': 'https://g0du4.github.io', // ajuste pro seu domínio real do GitHub Pages
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
