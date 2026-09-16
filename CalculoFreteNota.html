@@ -2155,7 +2155,7 @@ async function executarParsePDF(arrayBuffer, nomeArquivo) {
                     destinatario: nf.destNome,
                     destCNPJ: nf.destCNPJ,
                     pesoKg: pesoExc,
-                    totalCx: cxExc,
+                    totalCx: cxExc || 0,
                     valorNF: 0,
                     transportadora: nf.transpNome || 'Sem Transportadora',
                     frete: frExc,
