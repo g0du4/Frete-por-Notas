@@ -164,11 +164,11 @@ async function handleNotasFiscais(request, env, ctx) {
     }
 
     if (request.method === 'DELETE') {
-  const { searchParams } = new URL(request.url);
-  const idi = searchParams.get('id');
+  //const { searchParams } = new URL(request.url);
+  //const idi = searchParams.get('id');
   const body = await request.json();
       console.log('Tentando deletar nota fiscal com ID:', body);
-  if (!id) {
+  if (!body) {
     return jsonResponse({ erro: 'ID da nota fiscal é obrigatório' }, 400);
   }
 
