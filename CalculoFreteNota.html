@@ -2175,7 +2175,7 @@ async function executarParsePDF(arrayBuffer, nomeArquivo) {
 
             //INCLUSÃO NO BANCO TESTE INICIAL
     async function enviarParaBanco() {
-        console.log('Iniciando envio de dados para o servidor...' + ST.lote[0].id);
+        console.log('Iniciando envio de dados para o servidor...' + ST.lote[1   ].id);
     
     
     for (const nf of ST.lote) {
@@ -2342,7 +2342,7 @@ async function executarParsePDF(arrayBuffer, nomeArquivo) {
                 '<td style="color:var(--color-text-sub); font-family:monospace;">' + formatarMoeda(r.freteUnitCx) + '</td>' +
                 '<td style="text-align:center;">' +
                     '<button class="btn sm" onclick="alternarExibicaoItensHistorico(\'' + r.id + '\')" title="Ver Itens"><i class="ti ti-list"></i></button>' +
-                    '<button class="btn sm danger" onclick="excluirItemDoHistorico(' + r.id + ')" title="Excluir"><i class="ti ti-trash"></i></button>' +
+                    '<button class="btn sm danger" onclick="excluirItemDoHistorico(\'' + r.id + '\')" title="Excluir"><i class="ti ti-trash"></i></button>' +
                 '</td>';
             tbody.appendChild(trPrincipal);
                 
