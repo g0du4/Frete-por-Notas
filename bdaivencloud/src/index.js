@@ -191,6 +191,10 @@ async function handleNotasFiscais(request, env, ctx) {
 }
 
     return jsonResponse({ erro: 'Método não suportado nessa rota' }, 405);
+  }  catch (error) {
+  // Tratamento de erros
+  console.error("Erro na execução:", error);
+  throw error;
   } finally {
     ctx.waitUntil(prisma.$disconnect());
   }
