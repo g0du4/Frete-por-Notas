@@ -2175,7 +2175,7 @@ async function executarParsePDF(arrayBuffer, nomeArquivo) {
 
             //INCLUSÃO NO BANCO TESTE INICIAL
     async function enviarParaBanco() {
-        console.log('Iniciando envio de dados para o servidor...' + ST.lote[1   ].id);
+       
     
     
     for (const nf of ST.lote) {
@@ -2213,7 +2213,7 @@ async function executarParsePDF(arrayBuffer, nomeArquivo) {
             dados.itens.push(item);
         }
 
-        console.log('Enviando dados da nota fiscal para o servidor:', dados);
+        
         const resposta = await fetch(`${URL_BACKEND}/notas-fiscais`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -2325,7 +2325,7 @@ async function executarParsePDF(arrayBuffer, nomeArquivo) {
             var fonteBadge = '<span class="badge bg-' + r.fonte.toLowerCase() + '">' + r.fonte + '</span>';
             
 
-            console.log('Renderizando registro histórico:', r);
+            
             var trPrincipal = document.createElement('tr');
             trPrincipal.innerHTML =
                 '<td style="text-align:center;"><input type="checkbox" class="chk-hist-row" value="' + r.id + '"></td>' +
@@ -2863,7 +2863,7 @@ function formatarDataDBParaTela(dataISO) {
      async function excluirItemDoHistorico(idReg) {
 
         try {
-            
+            console.log('Excluindo registro → ' + idReg);
           const resposta = await fetch(`${URL_BACKEND}/notas-fiscais`, {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
