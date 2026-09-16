@@ -2783,17 +2783,17 @@ async function carregarHistoricoDoBanco() {
         // 2. Mapeia os campos do banco para o padrão do ST.registros
         ST.registros = dadosDB.map(nota => {
             return {
-                id: nota.id || Date.now() + Math.random(), // Mantém um ID para os botões de editar/excluir funcionarem
+                id: String(nota.id) || Date.now() + Math.random(), // Mantém um ID para os botões de editar/excluir funcionarem
                 data: formatarDataDBParaTela(nota.data),   // Converte DateTime para "DD/MM/YYYY"
-                nNF: String(nota.nNF),
+                nNF: Number(nota.nNF),
                 totalCx: Number(nota.totalCx || 0),
                 pesoKg: Number(nota.pesoKg || 0),
                 frete: Number(nota.frete || 0),
                 freteUnitKg: Number(nota.freteUnitKg || 0),
                 freteUnitCx: Number(nota.freteUnitCx || 0),
                 fonte: nota.fonte || '',
-                destinatario: nota.destinatario || '',
-                destCNPJ: nota.destCNPJ || '',
+                destinatario: String(nota.destinatario),
+                destCNPJ: String(nota.destCNPJ),
                 valorNF: Number(nota.valorNF || 0),
                 transportadora: nota.transportadora || '',
                 isExcecao: false, // Campo que o seu JS usa para pintar a linha
