@@ -279,7 +279,7 @@
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
                     <h3 style="font-size:14px; font-weight:600;" id="txt-lote-count">0 notas carregadas no lote</h3>
                     <div style="display:flex; gap:8px;">
-                        <button class="btn success" onclick="salvarLoteCompleto()"><i class="ti ti-device-floppy"></i> Salvar Todas as Notas</button>
+                        <button class="btn success" onclick="enviarParaBanco()"><i class="ti ti-device-floppy"></i> Salvar Todas as Notas</button>
                         <button class="btn danger" onclick="limparLoteAtual()"><i class="ti ti-trash"></i> Descartar Lote</button>
                     </div>
                 </div>
@@ -3528,29 +3528,6 @@ function formatarDataDBParaTela(dataISO) {
     inicializarPressLongo();
      
     renderConfiguracoes();
-</script>
-<script>
- 
-
-  // Buscar e listar as notas fiscais
-  async function carregarNotas() {
-    const resposta = await fetch(`${URL_BACKEND}/notas-fiscais`);
-    const notas = await resposta.json();
-    console.log(notas); 
-  }
-
-  // Cadastrar uma nova nota fiscal
-  async function cadastrarNota() {
-
-    const resposta = await fetch(`${URL_BACKEND}/cadastrar-nota`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(novaNota),
-    });
-
-    const resultado = await resposta.json();
-    console.log(resultado);
-  }
 </script>
 </body>
 </html>
