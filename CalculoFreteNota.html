@@ -2211,7 +2211,7 @@ async function executarParsePDF(arrayBuffer, nomeArquivo) {
                 dados.itens.push(item);
             }
 
-             
+            console.log('Enviando dados da nota fiscal para o servidor:', dados); 
            const resposta = await fetch(`${URL_BACKEND}/notas-fiscais`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
