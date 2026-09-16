@@ -126,7 +126,7 @@ async function handleNotasFiscais(request, env, ctx) {
       });
       return jsonResponse(notas);
     }
-
+    
     if (request.method === 'POST') {
       const body = await request.json();
       console.log('Recebendo dados para salvar nota fiscal:', body);
