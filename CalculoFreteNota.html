@@ -2219,7 +2219,6 @@ async function executarParsePDF(arrayBuffer, nomeArquivo) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(dados)
         });
-        console.log(dados);
         console.log(await resposta.json());
     }
 
@@ -2325,6 +2324,8 @@ async function executarParsePDF(arrayBuffer, nomeArquivo) {
             var isExc    = r.isExcecao === true;
             var fonteBadge = '<span class="badge bg-' + r.fonte.toLowerCase() + '">' + r.fonte + '</span>';
             
+
+            console.log('Renderizando registro histórico:', r);
             var trPrincipal = document.createElement('tr');
             trPrincipal.innerHTML =
                 '<td style="text-align:center;"><input type="checkbox" class="chk-hist-row" value="' + r.id + '"></td>' +
