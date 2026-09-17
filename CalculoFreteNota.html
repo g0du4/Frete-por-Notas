@@ -2213,7 +2213,6 @@ async function executarParsePDF(arrayBuffer, nomeArquivo) {
             dados.itens.push(item);
         }
 
-        console.log('Enviando NF para o backend:', dados);
         const resposta = await fetch(`${URL_BACKEND}/notas-fiscais`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -2803,7 +2802,9 @@ async function carregarHistoricoDoBanco() {
                 isExcecao: false, // Campo que o seu JS usa para pintar a linha
                 itens: nota.itens || [] // Se a sua API trouxer os itens, coloque aqui
             };
-        });        
+        });  
+        console.log("ST.registros após mapeamento: ", ST.registros);
+        console.log("Total de registros carregados: ", dadosBD);      
 
     } catch (erro) {
         console.error("Erro ao buscar histórico:", erro);
