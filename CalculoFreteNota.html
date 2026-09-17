@@ -919,7 +919,7 @@
         document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
         if(event) event.target.closest('.tab').classList.add('active');
         document.getElementById('panel-' + tabId).classList.add('active');
-        if (tabId === 'historico') { carregarHistoricoDoBanco();/*  renderHistoricoCompleto(); */ }
+        if (tabId === 'historico') { renderHistoricoCompleto(); /*carregarHistoricoDoBanco();   */ }
         if (tabId === 'config') { renderConfiguracoes(); }
     }
 
@@ -2226,6 +2226,7 @@ async function executarParsePDF(arrayBuffer, nomeArquivo) {
 }
 
     function renderHistoricoCompleto() {
+       carregarHistoricoDoBanco();
         var selectFiltro = document.getElementById('filter-transp');
         var valorSelecionadoPreviamente = selectFiltro.value;
         
@@ -2811,7 +2812,7 @@ async function carregarHistoricoDoBanco() {
         mostrarToastAviso("Carregando histórico do navegador");
     }
     persistirDados();
-    renderHistoricoCompleto();
+    
 }
 
 // Função auxiliar para converter o DateTime do banco para "DD/MM/YYYY"
