@@ -2220,10 +2220,26 @@ async function executarParsePDF(arrayBuffer, nomeArquivo) {
         });
         console.log(await resposta.json());
     }
-
+    salvarLoteCompleto();
     limparLoteAtual();
     mostrarToast('Dados enviados para o servidor com sucesso!');
 }
+
+    // 1. Verifica como a página foi aberta/carregada
+const tipoNavegacao = performance.getEntriesByType('navigation')[0]?.type;
+
+// 2. Verifica se já existe o seu registro no sessionStorage
+const temRegistro = sessionStorage.getItem('aba_aberta_em') !== null;
+
+// 3. Condicional direta
+if (tipoNavegacao === 'reload') {
+    console.log("🔄 A página foi RECARREGADA (F5). O sessionStorage foi mantido.");
+} else if (!temRegistro) {
+    console.log("🆕 ABA NOVA! Primeiro acesso absoluto nesta aba.");
+} else {
+    console.log("➡️ Navegação normal, mas a aba já tinha dados salvos.");
+}
+
 
     function renderHistoricoCompleto() {
        if(ST.registros.length<=0) { carregarHistoricoDoBanco();}
