@@ -130,6 +130,7 @@ async function handleNotasFiscais(request, env, ctx) {
     if (request.method === 'POST') {
       const body = await request.json();
       
+      console.log('Recebendo nova nota fiscal:', body);
       const novaNota = await prisma.notas_fiscais.create({
         data: {
           data: new Date(body.data.split('/').reverse().join('-')),

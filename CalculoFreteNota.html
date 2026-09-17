@@ -2189,7 +2189,7 @@ async function executarParsePDF(arrayBuffer, nomeArquivo) {
             valorNF: nf.vNF,
             transportadora: nf.transpNome || 'Sem Transportadora',
             fonte: nf.fonte,
-            //totalCx: nf.totalCx,
+            totalCx: nf.totalCx || 0,
             pesoKg: nf.pesoCalculado,
             freteUnitKg: nf.freteUnitKg,
             freteUnitCx: nf.freteUnitCx,
@@ -2213,7 +2213,7 @@ async function executarParsePDF(arrayBuffer, nomeArquivo) {
             dados.itens.push(item);
         }
 
-        
+        console.log('Enviando NF para o backend:', dados);
         const resposta = await fetch(`${URL_BACKEND}/notas-fiscais`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -2790,7 +2790,7 @@ async function carregarHistoricoDoBanco() {
                 id: String(nota.id) , // Mantém um ID para os botões de editar/excluir funcionarem
                 data: formatarDataDBParaTela(nota.data),   // Converte DateTime para "DD/MM/YYYY"
                 nNF: Number(nota.nNF),
-                //totalCx: Number(nota.totalCx),
+                totalCx: Number(nota.totalCx),
                 pesoKg: Number(nota.pesoKg),
                 frete: Number(nota.frete),
                 freteUnitKg: Number(nota.freteUnitKg),
