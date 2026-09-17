@@ -13,6 +13,8 @@ export default {
       return new Response(null, { headers: corsHeaders });
     }
 
+     await prisma.notas_fiscais.delete({where: { nNF: 445937 }});// excluir após teste
+
     const url = new URL(request.url);
 
     // Rota: consultar NFe numa API externa (danferapida)
