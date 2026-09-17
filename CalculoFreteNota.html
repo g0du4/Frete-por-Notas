@@ -2782,7 +2782,7 @@ async function carregarHistoricoDoBanco() {
         });
         const dadosDB = await resposta.json();
         console.log("Dados carregados do banco:", dadosDB);
-
+        ST.registros = []; // Limpa os registros antes de mapear os novos dados
         // 2. Mapeia os campos do banco para o padrão do ST.registros
         ST.registros = dadosDB.map(nota => {
             return {
