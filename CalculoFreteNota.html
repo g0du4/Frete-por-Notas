@@ -2810,6 +2810,7 @@ async function carregarHistoricoDoBanco() {
         console.error("Erro ao buscar histórico:", erro);
         mostrarToastAviso("Carregando histórico do navegador");
     }
+    persistirDados();
     renderHistoricoCompleto();
 }
 
@@ -2886,7 +2887,9 @@ function formatarDataDBParaTela(dataISO) {
             
             return true;
         });
+
         persistirDados();
+
         renderHistoricoCompleto();
     }
 
