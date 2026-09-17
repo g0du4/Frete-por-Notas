@@ -2226,7 +2226,7 @@ async function executarParsePDF(arrayBuffer, nomeArquivo) {
 }
 
     function renderHistoricoCompleto() {
-       carregarHistoricoDoBanco();
+       if(ST.registros.length<=0) { carregarHistoricoDoBanco();}
         var selectFiltro = document.getElementById('filter-transp');
         var valorSelecionadoPreviamente = selectFiltro.value;
         
@@ -2775,8 +2775,8 @@ async function executarParsePDF(arrayBuffer, nomeArquivo) {
     }
 
 async function carregarHistoricoDoBanco() {
-    alert(ST.registros.length)
-    if(ST.registros.length<=0) {
+    
+    
         try {
             // 1. Busca os dados da sua API/Banco
             const resposta = await fetch(`${URL_BACKEND}/notas-fiscais`, {
@@ -2813,7 +2813,7 @@ async function carregarHistoricoDoBanco() {
             console.error("Erro ao buscar histórico:", erro);
             mostrarToastAviso("Carregando histórico do navegador");
         }
-    }
+    
     persistirDados();
     
 }
