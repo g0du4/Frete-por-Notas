@@ -2775,8 +2775,8 @@ async function executarParsePDF(arrayBuffer, nomeArquivo) {
     }
 
 async function carregarHistoricoDoBanco() {
-    
-    if(ST.registros.length>0) {
+    alert(ST.registros.length)
+    if(ST.registros.length<=0) {
         try {
             // 1. Busca os dados da sua API/Banco
             const resposta = await fetch(`${URL_BACKEND}/notas-fiscais`, {
