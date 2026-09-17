@@ -2232,10 +2232,9 @@ const tipoNavegacao = performance.getEntriesByType('navigation')[0]?.type;
 const temRegistro = sessionStorage.getItem('aba_aberta_em') !== null;
 
 // 3. Condicional direta
-if (tipoNavegacao === 'reload') {
+if (tipoNavegacao === 'reload' || !temRegistro) { carregarHistoricoDoBanco();
     console.log("🔄 A página foi RECARREGADA (F5). O sessionStorage foi mantido.");
-} else if (!temRegistro) {
-    console.log("🆕 ABA NOVA! Primeiro acesso absoluto nesta aba.");
+    if (!temRegistro) console.log("🆕 ABA NOVA! Primeiro acesso absoluto nesta aba.");
 } else {
     console.log("➡️ Navegação normal, mas a aba já tinha dados salvos.");
 }
