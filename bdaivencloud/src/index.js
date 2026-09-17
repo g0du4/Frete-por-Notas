@@ -13,8 +13,7 @@ export default {
       return new Response(null, { headers: corsHeaders });
     }
 
-     const notaExcluir = await prisma.notas_fiscais.delete({where: { nNF: 445937 }});// excluir após teste
-    console.log('Nota fiscal excluída:', notaExcluir);
+    
     const url = new URL(request.url);
 
     // Rota: consultar NFe numa API externa (danferapida)
