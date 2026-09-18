@@ -2849,7 +2849,7 @@ function formatarDataDBParaTela(dataISO) {
         checkboxes.forEach(function(c) { c.checked = chk.checked; });
     }
 
-    function excluirSelecionadosHistorico() {
+    async function excluirSelecionadosHistorico() {
         var checkboxes = document.querySelectorAll('.chk-hist-row:checked');
         if (checkboxes.length === 0) { mostrarToastAviso('Selecione ao menos um registro para excluir.'); return; }
         var idsToRemove = Array.from(checkboxes).map(function(c){ return c.value; });
@@ -2860,6 +2860,21 @@ function formatarDataDBParaTela(dataISO) {
         var todosIds = idsToRemove.concat(idsExcVinc);
         console.log('Excluindo registros → ' + todosIds.join(', '));
         console.log('Id registros → ' + idsExcVinc.join(', '));
+
+        const idsParaExcluir = ["cmu4v0ufs0002psp7ltb6cb9t", "cmu4v0ufs0003psp7abcd1234"];
+        console.log('IDs para exclusão:', idsParaExcluir);
+        const resposta = await fetch(`${URL_BACKEND}/notas-fiscais`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: idsParaExcluir })
+        });
+
+        const data = await resposta.json();
+        console.log(data);
+
+
+
+
         ST.registros = ST.registros.filter(function(r){ return !todosIds.includes(String(r.id)); });
         persistirDados();
         renderHistoricoCompleto();
