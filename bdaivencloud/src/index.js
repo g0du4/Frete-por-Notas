@@ -176,11 +176,11 @@ async function handleNotasFiscais(request, env, ctx) {
  
   try {
        await prisma.itens.deleteMany({
-      where: { nota_fiscal_id: { in: id } },
+      where: { nota_fiscal_id: { in: id.join(', ') } },
     });
 
     const notaDeletada = await prisma.notas_fiscais.deleteMany({
-      where: { id: { in: id } },
+      where: { id: { in: id.join(', ') } },
     });
 
     return jsonResponse({ mensagem: 'Nota fiscal deletada com sucesso', notaDeletada });
@@ -188,6 +188,7 @@ async function handleNotasFiscais(request, env, ctx) {
     if (erro.code === 'P2025') {
       return jsonResponse({ erro: 'Nota fiscal não encontrada' }, 404);
     }
+    console.error('Erro ao deletar nota fiscal →', erro);
     return jsonResponse({ erro: 'Erro ao deletar nota fiscal' }, 500);
   }
 }
