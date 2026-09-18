@@ -2356,7 +2356,7 @@ if (tipoNavegacao === 'reload' || !temRegistro) { carregarHistoricoDoBanco();
                 '<td style="color:var(--color-text-sub); font-family:monospace;">' + formatarMoeda(r.freteUnitCx) + '</td>' +
                 '<td style="text-align:center;">' +
                     '<button class="btn sm" onclick="alternarExibicaoItensHistorico(\'' + r.id + '\')" title="Ver Itens"><i class="ti ti-list"></i></button>' +
-                    '<button class="btn sm danger" onclick="excluirItemDoHistorico(' + r.id + ')" title="Excluir"><i class="ti ti-trash"></i></button>' +
+                    '<button class="btn sm danger" onclick="excluirItemDoHistorico(' + r.id + ')" data-id="' + r.id + '"title="Excluir"><i class="ti ti-trash"></i></button>' +
                 '</td>';
             tbody.appendChild(trPrincipal);
                 
@@ -2929,21 +2929,6 @@ function formatarDataDBParaTela(dataISO) {
 
         renderHistoricoCompleto();
     }
-
-    document.getElementById('tabela-historico').addEventListener('click', function(e) {
-  var botao = e.target.closest('.btn-excluir-item');
-  if (!botao) return; // clique não foi em nenhum botão de excluir
-
-  var id = botao.dataset.id;
-  console.log('Excluindo registro data id→ ' + id);
-  //excluirItemDoHistorico(id);
-});
-
-
-
-
-
-
 
     function formatarMoedaExport(v) {
         return 'R$ ' + parseFloat(v || 0).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
@@ -3582,6 +3567,17 @@ function formatarDataDBParaTela(dataISO) {
         });
     }
     
+        document.getElementById('view-por-nota').addEventListener('click', function(e) {
+  var botao = e.target.closest('.danger');
+  if (!botao) return; // clique não foi em nenhum botão de excluir
+
+  var id = botao.dataset.id;
+  console.log('Excluindo registro data id→ ' + id);
+  //excluirItemDoHistorico(id);
+});
+
+
+
     inicializarPressLongo();
      
     renderConfiguracoes();
