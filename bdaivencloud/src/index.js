@@ -173,7 +173,8 @@ async function handleNotasFiscais(request, env, ctx) {
   if (!id) {
     return jsonResponse({ erro: 'ID da nota fiscal é obrigatório' }, 400);
   }
-
+  console.log('ID recebido para exclusão:', 'cmu4v0ufs0002psp7ltb6cb9t');
+  console.log(await prisma.notas_fiscais.find({ where: { id: 'cmu4v0ufs0002psp7ltb6cb9t' }}));
   try {
        await prisma.itens.deleteMany({
       where: { nota_fiscal_id: { in: id } },
