@@ -176,11 +176,11 @@ async function handleNotasFiscais(request, env, ctx) {
  
   try {
        await prisma.itens.deleteMany({
-      where: { notaFiscalId: { in: id.join(', ') } },
+      where: { notaFiscalId: { in: id } },
     });
 
     const notaDeletada = await prisma.notas_fiscais.deleteMany({
-      where: { id: { in: id.join(', ') } },
+      where: { id: { in: id } },
     });
 
     return jsonResponse({ mensagem: 'Nota fiscal deletada com sucesso', notaDeletada });
