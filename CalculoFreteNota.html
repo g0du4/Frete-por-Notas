@@ -3573,7 +3573,7 @@ function formatarDataDBParaTela(dataISO) {
 
   var id = botao.dataset.id;
   console.log('Excluindo registro data id→ ' + id);
-  excluirItemDoHistorico(id);
+  excluirItemDoHistorico(String(id));
 });
 
 
