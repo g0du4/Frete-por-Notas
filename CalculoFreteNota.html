@@ -2858,11 +2858,11 @@ function formatarDataDBParaTela(dataISO) {
             .filter(function(r){ return r.nfOrigemId && idsToRemove.includes(String(r.nfOrigemId)); })
             .map(function(r){ return String(r.id);   });
         var todosIds = idsToRemove.concat(idsExcVinc);
-        console.log('Excluindo registros → ' + todosIds.join(', '));
+        console.log('Excluindo registros → ' + todosIds);
         console.log('Id registros → ' + idsExcVinc.join(', '));
 
         const idsParaExcluir = ["cmu4v0ufs0002psp7ltb6cb9t", "cmu4v0ufs0003psp7abcd1234"];
-        console.log('IDs para exclusão:', idsParaExcluir.join(', ')); 
+        console.log('IDs para exclusão:', idsParaExcluir); 
 
         const resposta = await fetch(`${URL_BACKEND}/notas-fiscais`, {
             method: 'DELETE',
