@@ -2858,22 +2858,21 @@ function formatarDataDBParaTela(dataISO) {
             .filter(function(r){ return r.nfOrigemId && idsToRemove.includes(String(r.nfOrigemId)); })
             .map(function(r){ return String(r.id);   });
         var todosIds = idsToRemove.concat(idsExcVinc);
-        console.log('Excluindo registros → ' + todosIds);
-        console.log('Id registros → ' + idsExcVinc.join(', '));
 
-        const idsParaExcluir = ["cmu4v0ufs0002psp7ltb6cb9t", "cmu4v0ufs0003psp7abcd1234"];
-        console.log('IDs para exclusão:', idsParaExcluir); 
+        try {
+            const resposta = await fetch(`${URL_BACKEND}/notas-fiscais`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: todosIds })
+            });
 
-        const resposta = await fetch(`${URL_BACKEND}/notas-fiscais`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: todosIds })
-        });
+            const data = await resposta.json();
+            console.log(data);
 
-        const data = await resposta.json();
-        console.log(data);
-
-
+        } catch (error) {
+            console.error('Erro ao excluir registros:', error);
+            return mostrarToastAviso('Erro ao excluir registros. Tente novamente.');
+        }
 
 
         ST.registros = ST.registros.filter(function(r){ return !todosIds.includes(String(r.id)); });
