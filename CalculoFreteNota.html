@@ -2356,7 +2356,7 @@ if (tipoNavegacao === 'reload' || !temRegistro) { carregarHistoricoDoBanco();
                 '<td style="color:var(--color-text-sub); font-family:monospace;">' + formatarMoeda(r.freteUnitCx) + '</td>' +
                 '<td style="text-align:center;">' +
                     '<button class="btn sm" onclick="alternarExibicaoItensHistorico(\'' + r.id + '\')" title="Ver Itens"><i class="ti ti-list"></i></button>' +
-                    '<button class="btn sm danger" onclick="excluirItemDoHistorico(' + String(r.id) + ')" data-id="' + r.id + '" title="Excluir"><i class="ti ti-trash"></i></button>' +
+                    '<button class="btn sm danger" data-id="' + r.id + '" title="Excluir"><i class="ti ti-trash"></i></button>' +
                 '</td>';
             tbody.appendChild(trPrincipal);
                 
