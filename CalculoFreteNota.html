@@ -2910,7 +2910,8 @@ function formatarDataDBParaTela(dataISO) {
                 console.log(await resposta.json());
             
         } catch (error) {
-         console.log('Erro ao deletrar → ' + error)   
+         console.log('Erro ao deletrar → ' + error) 
+         return mostrarToastAviso('Erro ao excluir registro. Tente novamente.');  
         }
 
         var reg = ST.registros.find(function(r){ return r.id === idReg; });
