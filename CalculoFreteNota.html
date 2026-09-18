@@ -2858,6 +2858,8 @@ function formatarDataDBParaTela(dataISO) {
             .filter(function(r){ return r.nfOrigemId && idsToRemove.includes(String(r.nfOrigemId)); })
             .map(function(r){ return String(r.id);   });
         var todosIds = idsToRemove.concat(idsExcVinc);
+        console.log('Excluindo registros → ' + todosIds.join(', '));
+        console.log('Id registros → ' + idsExcVinc.join(', '));
         ST.registros = ST.registros.filter(function(r){ return !todosIds.includes(String(r.id)); });
         persistirDados();
         renderHistoricoCompleto();
