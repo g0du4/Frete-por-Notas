@@ -2867,7 +2867,7 @@ function formatarDataDBParaTela(dataISO) {
         const resposta = await fetch(`${URL_BACKEND}/notas-fiscais`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: todosIds })
+            body: JSON.stringify({ id: todosIds.join(', ') })
         });
 
         const data = await resposta.json();
