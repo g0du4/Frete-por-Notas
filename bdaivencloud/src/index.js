@@ -188,7 +188,7 @@ async function handleNotasFiscais(request, env, ctx) {
     if (erro.code === 'P2025') {
       return jsonResponse({ erro: 'Nota fiscal não encontrada' }, 404);
     }
-    console.error('Erro ao deletar nota fiscal →', erro);
+    console.log('Erro ao deletar nota fiscal →', erro);
     return jsonResponse({ erro: 'Erro ao deletar nota fiscal' }, 500);
   }
 }
