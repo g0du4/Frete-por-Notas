@@ -2899,12 +2899,13 @@ function formatarDataDBParaTela(dataISO) {
 
      async function excluirItemDoHistorico(idReg) {
 
+        
         try {
-            console.log('Excluindo registro → ' + idReg);
+            
           const resposta = await fetch(`${URL_BACKEND}/notas-fiscais`, {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: idReg } )
+                    body: JSON.stringify({ id: String(idReg) } )
                 });
 
                 console.log(await resposta.json());
