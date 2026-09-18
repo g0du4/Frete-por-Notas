@@ -166,22 +166,21 @@ async function handleNotasFiscais(request, env, ctx) {
     }
 
     if (request.method === 'DELETE') {
-      
+       
       const body = await request.json().catch(() => null);
       const id = body?.id;
-
+      console.log('ID recebido para exclusão:', id);
   if (!id) {
     return jsonResponse({ erro: 'ID da nota fiscal é obrigatório' }, 400);
   }
 
   try {
-    // Deleta os itens relacionados primeiro (evita erro de FK)
-    await prisma.itens.deleteMany({
-      where: { notaFiscalId: id },
+       await prisma.itens.deleteMany({
+      where: { nota_fiscal_id: { in: id } },
     });
 
-    const notaDeletada = await prisma.notas_fiscais.delete({
-      where: { id: id },
+    const notaDeletada = await prisma.notas_fiscais.deleteMany({
+      where: { id: { in: id } },
     });
 
     return jsonResponse({ mensagem: 'Nota fiscal deletada com sucesso', notaDeletada });
