@@ -2234,7 +2234,6 @@ const temRegistro = sessionStorage.getItem('aba_aberta_em') !== null;
 // 3. Condicional direta
 if (tipoNavegacao === 'reload' || !temRegistro) { carregarHistoricoDoBanco();
     console.log("🔄 A página foi RECARREGADA (F5). O sessionStorage foi mantido.");
-    if (!temRegistro) console.log("🆕 ABA NOVA! Primeiro acesso absoluto nesta aba.");
 } else {
     console.log("➡️ Navegação normal, mas a aba já tinha dados salvos.");
 }
@@ -2357,7 +2356,7 @@ if (tipoNavegacao === 'reload' || !temRegistro) { carregarHistoricoDoBanco();
                 '<td style="color:var(--color-text-sub); font-family:monospace;">' + formatarMoeda(r.freteUnitCx) + '</td>' +
                 '<td style="text-align:center;">' +
                     '<button class="btn sm" onclick="alternarExibicaoItensHistorico(\'' + r.id + '\')" title="Ver Itens"><i class="ti ti-list"></i></button>' +
-                    '<button class="btn sm danger" onclick="excluirItemDoHistorico("' + r.id + '")" title="Excluir"><i class="ti ti-trash"></i></button>' +
+                    '<button class="btn sm danger" onclick="excluirItemDoHistorico(\'' + r.id + '\')" title="Excluir"><i class="ti ti-trash"></i></button>' +
                 '</td>';
             tbody.appendChild(trPrincipal);
                 
@@ -2799,7 +2798,7 @@ async function carregarHistoricoDoBanco() {
                 headers: { 'Content-Type': 'application/json' }
             });
             const dadosDB = await resposta.json();
-            console.log("Dados carregados do banco:", dadosDB);
+            
             ST.registros = []; // Limpa os registros antes de mapear os novos dados
             // 2. Mapeia os campos do banco para o padrão do ST.registros
             ST.registros = dadosDB.map(nota => {
