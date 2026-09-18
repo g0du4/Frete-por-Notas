@@ -169,7 +169,7 @@ async function handleNotasFiscais(request, env, ctx) {
        
       const body = await request.json().catch(() => null);
       const id = body?.id;
-      console.log('ID recebido para exclusão:', id.join(', '));
+      console.log('ID recebido para exclusão →', id.join(', '));
   if (!id) {
     return jsonResponse({ erro: 'ID da nota fiscal é obrigatório' }, 400);
   }
