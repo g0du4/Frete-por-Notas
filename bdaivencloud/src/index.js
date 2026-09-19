@@ -193,12 +193,9 @@ async function handleNotasFiscais(request, env, ctx) {
   }
 
   // Monta a resposta final juntando cada nota com seus itens
-  const resultado = notasCriadas.map((nota) => ({
-    ...nota,
-    itens: itensCriados.filter((item) => item.nota_fiscal_id === nota.id),
-  }));
+  
 
-  return jsonResponse(resultado, 201);
+  return jsonResponse(notasCriadas, 201);
 
   }catch (error) {
   console.log('Erro ao criar notas fiscais:', error);
