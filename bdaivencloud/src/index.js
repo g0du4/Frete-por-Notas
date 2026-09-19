@@ -163,7 +163,6 @@ async function handleNotasFiscais(request, env, ctx) {
     data: dadosNotas,
   });
 
-
   // Usa o id de cada nota criada para montar os itens correspondentes
   const todosOsItens = [];
   notasCriadas.forEach((notaCriada, index) => {
@@ -192,9 +191,6 @@ async function handleNotasFiscais(request, env, ctx) {
     });
   }
 
-  // Monta a resposta final juntando cada nota com seus itens
-  
-
   return jsonResponse(notasCriadas, 201);
 
   }catch (error) {
@@ -202,48 +198,6 @@ async function handleNotasFiscais(request, env, ctx) {
   return jsonResponse({ erro: 'Erro ao criar notas fiscais' }, 507);
 }
 }
-
-
-
-
-
-    // FUNCIONANDO NO METODO ANTERIOR REMOVER S
-    if (request.method === 'POSTS') {
-      const body = await request.json();
-      
-      console.log('Recebendo nova nota fiscal:', body);
-      const novaNota = await prisma.notas_fiscais.create({
-        data: {
-          data: new Date(body.data.split('/').reverse().join('-')),
-          nNF: parseInt(body.nNF),
-          totalCx: parseFloat(body.totalCx),
-          pesoKg: parseFloat(body.pesoKg),
-          frete: parseFloat(body.frete),
-          freteUnitKg: parseFloat(body.freteUnitKg),
-          freteUnitCx: parseFloat(body.freteUnitCx),
-          fonte: body.fonte,
-          destinatario: body.destinatario,
-          destCNPJ: String(body.destCNPJ),
-          valorNF: body.valorNF,
-          transportadora: body.transportadora,
-          itens: {
-            create: (body.itens ?? []).map((item) => ({
-              item: item.item,
-              qtdOriginal: item.qtdOriginal,
-              unMedida: item.unMedida,
-              qtdcx: item.qtdcx,
-              peso: item.peso,
-              precoCobrado: item.precoCobrado,
-              temExcecao: item.temExcecao,
-              tipoCalculoItem: item.tipoCalculoItem,
-              nNf: parseInt(body.nNF),
-            })),
-          },
-        },
-        include: { itens: true },
-      });
-      return jsonResponse(novaNota, 201);
-    }
 
     if (request.method === 'DELETE') {
        
