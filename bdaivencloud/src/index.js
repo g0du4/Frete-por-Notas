@@ -128,7 +128,90 @@ async function handleNotasFiscais(request, env, ctx) {
       return jsonResponse(notas);
     }
     
+
     if (request.method === 'POST') {
+  const body = await request.json();
+
+  // Aceita tanto uma nota única (objeto) quanto várias (array)
+  const listaDeNotas = Array.isArray(body) ? body : [body];
+
+  console.log('Recebendo notas fiscais:', listaDeNotas.length);
+
+  if (listaDeNotas.length === 0) {
+    return jsonResponse({ erro: 'Nenhuma nota fiscal enviada' }, 400);
+  }
+
+  // Monta os dados das notas (sem id — o banco continua gerando)
+  const dadosNotas = listaDeNotas.map((nota) => ({
+    data: new Date(nota.data.split('/').reverse().join('-')),
+    nNF: parseInt(nota.nNF),
+    totalCx: parseFloat(nota.totalCx),
+    pesoKg: parseFloat(nota.pesoKg),
+    frete: parseFloat(nota.frete),
+    freteUnitKg: parseFloat(nota.freteUnitKg),
+    freteUnitCx: parseFloat(nota.freteUnitCx),
+    fonte: nota.fonte,
+    destinatario: nota.destinatario,
+    destCNPJ: String(nota.destCNPJ),
+    valorNF: nota.valorNF,
+    transportadora: nota.transportadora,
+  }));
+
+  try {
+  // Insere todas as notas de uma vez e já recebe de volta os ids gerados pelo banco
+  const notasCriadas = await prisma.notas_fiscais.createManyAndReturn({
+    data: dadosNotas,
+  });
+
+
+  // Usa o id de cada nota criada para montar os itens correspondentes
+  const todosOsItens = [];
+  notasCriadas.forEach((notaCriada, index) => {
+    const itensOriginais = listaDeNotas[index].itens ?? [];
+    itensOriginais.forEach((item) => {
+      todosOsItens.push({
+        item: item.item,
+        qtdOriginal: item.qtdOriginal,
+        unMedida: item.unMedida,
+        qtdcx: item.qtdcx,
+        peso: item.peso,
+        precoCobrado: item.precoCobrado,
+        temExcecao: item.temExcecao,
+        tipoCalculoItem: item.tipoCalculoItem,
+        nNf: notaCriada.nNF,
+        notaFiscalId: notaCriada.id, // id real que o banco gerou
+      });
+    });
+  });
+
+  // Insere todos os itens de uma vez, já vinculados às notas certas
+  let itensCriados = [];
+  if (todosOsItens.length > 0) {
+    itensCriados = await prisma.itens.createMany({
+      data: todosOsItens,
+    });
+  }
+
+  // Monta a resposta final juntando cada nota com seus itens
+  const resultado = notasCriadas.map((nota) => ({
+    ...nota,
+    itens: itensCriados.filter((item) => item.nota_fiscal_id === nota.id),
+  }));
+
+  return jsonResponse(resultado, 201);
+
+  }catch (error) {
+  console.log('Erro ao criar notas fiscais:', error);
+  return jsonResponse({ erro: 'Erro ao criar notas fiscais' }, 507);
+}
+}
+
+
+
+
+
+    // FUNCIONANDO NO METODO ANTERIOR REMOVER S
+    if (request.method === 'POSTS') {
       const body = await request.json();
       
       console.log('Recebendo nova nota fiscal:', body);
@@ -169,7 +252,6 @@ async function handleNotasFiscais(request, env, ctx) {
        
       const body = await request.json().catch(() => null);
       const id = body?.id;
-      console.log('ID recebido para exclusão →', id);
   if (!id) {
     return jsonResponse({ erro: 'ID da nota fiscal é obrigatório' }, 400);
   }

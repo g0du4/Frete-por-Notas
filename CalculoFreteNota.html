@@ -2173,11 +2173,68 @@ async function executarParsePDF(arrayBuffer, nomeArquivo) {
         exibirAlertaGlobal('import-alert', "Sucesso! " + contagemSalvos + " notas fiscais foram processadas e salvas no histórico definitivo.", 'success');
     }
 
+async function primeiroTeste() {
+
+        // 1. Garante que 'ST.lote' seja sempre tratado como um array (mesmo se vier 1 ou vários)
+const lotes = ST.lote ? (Array.isArray(ST.lote) ? ST.lote : [ST.lote]) : [];
+
+// 2. Transforma cada elemento do lote no formato do seu schema
+const dados = lotes.map(nf => {
+    
+    // Cria a estrutura base da nota fiscal
+    const notaFormatada = {
+        data: nf.dataStr,
+        nNF: Number(nf.nNF),               // Convertido para Int
+        frete: nf.freteCalculado,
+        destinatario: nf.destNome,
+        destCNPJ: nf.destCNPJ,
+        valorNF: nf.vNF,
+        transportadora: nf.transpNome || 'Sem Transportadora',
+        fonte: nf.fonte,
+        totalCx: nf.totalCx || 0,
+        pesoKg: nf.pesoCalculado,
+        freteUnitKg: nf.freteUnitKg,
+        freteUnitCx: nf.freteUnitCx,
+        itens: [], 
+    };
+
+    // 3. Garante que 'nf.itens' também seja um array (evita quebra se a NF tiver só 1 item)
+    const itensNota = nf.itens ? (Array.isArray(nf.itens) ? nf.itens : [nf.itens]) : [];
+
+    // Mapeia os itens diretamente para dentro do array da nota
+    notaFormatada.itens = itensNota.map(it => ({
+        item: it.nome,                          // Schema espera "item"
+        qtdOriginal: it.qtdOriginal,
+        unMedida: it.unidadeMedida,
+        qtdcx: it.qtdcx,
+        peso: it.pesocx,                        // Schema espera "peso"
+        precoCobrado: it.precoManual || it.precoExcecao || it.precoCobrado || 0,
+        temExcecao: it.temExcecao,
+        tipoCalculoItem: it.tipoCalculoItem,
+        nNf: Number(nf.nNF),                    // Número da nota repetido no item
+    }));
+
+    return notaFormatada;
+});
+
+        console.table(dados);
+
+            const resposta = await fetch(`${URL_BACKEND}/notas-fiscais`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dados)
+            });
+        console.log(await resposta.json());
+
+    }
+
+
             //INCLUSÃO NO BANCO TESTE INICIAL
     async function enviarParaBanco() {
        
+    primeiroTeste();
     
-    
+    return console.log("🚀 Dados preparados para envio ao banco de dados. (Simulação)"); // Simulação do envio
     for (const nf of ST.lote) {
 
         const dados = {
