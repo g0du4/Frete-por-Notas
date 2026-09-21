@@ -209,8 +209,9 @@ async function handleNotasFiscais(request, env, ctx) {
 					where: { id: { in: id } },
 				});
 
-				
-			} catch (erro) {
+        if(notaDeletada){return jsonResponse({ mensagem: 'Nota fiscal deletada com sucesso', notaDeletada });}
+			
+    } catch (erro) {
 				if (erro.code === 'P2025') {
 					return jsonResponse({ erro: 'Nota fiscal não encontrada' }, 404);
 				}
