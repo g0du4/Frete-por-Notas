@@ -2,243 +2,236 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../generated/prisma/client.js';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://g0du4.github.io', // ajuste pro seu domínio real do GitHub Pages
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE',
-  'Access-Control-Allow-Headers': 'Content-Type',
+	'Access-Control-Allow-Origin': 'https://g0du4.github.io', // ajuste pro seu domínio real do GitHub Pages
+	'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE',
+	'Access-Control-Allow-Headers': 'Content-Type',
 };
 
 export default {
-  async fetch(request, env, ctx) {
-    if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders });
-    }
+	async fetch(request, env, ctx) {
+		if (request.method === 'OPTIONS') {
+			return new Response(null, { headers: corsHeaders });
+		}
 
-    
-    const url = new URL(request.url);
+		const url = new URL(request.url);
 
-    // Rota: consultar NFe numa API externa (danferapida)
-    const matchNfe = url.pathname.match(/^\/api\/consultar-nfe\/(\d+)$/);
-    if (matchNfe) {
-      return consultarNfe(matchNfe[1], env);
-    }
+		// Rota: consultar NFe numa API externa (danferapida)
+		const matchNfe = url.pathname.match(/^\/api\/consultar-nfe\/(\d+)$/);
+		if (matchNfe) {
+			return consultarNfe(matchNfe[1], env);
+		}
 
-    // Rotas: notas fiscais no banco Aiven (via Prisma + Hyperdrive)
-    if (url.pathname === '/notas-fiscais') {
-      return handleNotasFiscais(request, env, ctx);
-    }
-    
-    return jsonResponse({ sucesso: false, erro: 'Rota não encontradaaaaaaaaaaaaa' }, 404);
-  },
+		// Rotas: notas fiscais no banco Aiven (via Prisma + Hyperdrive)
+		if (url.pathname === '/notas-fiscais') {
+			return handleNotasFiscais(request, env, ctx);
+		}
+
+		return jsonResponse({ sucesso: false, erro: 'Rota não encontrada' }, 404);
+	},
 };
 
 // ---------- Consulta de NFe (API externa) ----------
 
 async function consultarNfe(chave, env) {
-  if (chave.length !== 44) {
-    return jsonResponse({ sucesso: false, erro: 'Chave inválida. Precisa ter 44 dígitos.' }, 400);
-  }
+	if (chave.length !== 44) {
+		return jsonResponse({ sucesso: false, erro: 'Chave inválida. Precisa ter 44 dígitos.' }, 400);
+	}
 
-  const apiKey = env.DANFERAPIDA_API_KEY;
-  if (!apiKey) {
-    return jsonResponse({ sucesso: false, erro: 'DANFERAPIDA_API_KEY não configurada nas variáveis do Worker.' }, 500);
-  }
+	const apiKey = env.DANFERAPIDA_API_KEY;
+	if (!apiKey) {
+		return jsonResponse({ sucesso: false, erro: 'DANFERAPIDA_API_KEY não configurada nas variáveis do Worker.' }, 500);
+	}
 
-  try {
-    const resposta = await fetch(`https://api.danferapida.com.br/documents/b2b/search/${chave}`, {
-      method: 'GET',
-      headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' },
-    });
+	try {
+		const resposta = await fetch(`https://api.danferapida.com.br/documents/b2b/search/${chave}`, {
+			method: 'GET',
+			headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' },
+		});
 
-    const corpo = await resposta.json().catch(() => null);
+		const corpo = await resposta.json().catch(() => null);
 
-    if (!resposta.ok) {
-      return jsonResponse(
-        { sucesso: false, erro: (corpo && (corpo.message || corpo.erro)) || `Erro HTTP ${resposta.status}` },
-        502
-      );
-    }
+		if (!resposta.ok) {
+			return jsonResponse({ sucesso: false, erro: (corpo && (corpo.message || corpo.erro)) || `Erro HTTP ${resposta.status}` }, 502);
+		}
 
-    if (!corpo || !corpo.xmlCode) {
-      return jsonResponse({ sucesso: false, erro: 'A API não retornou o XML esperado.' }, 502);
-    }
+		if (!corpo || !corpo.xmlCode) {
+			return jsonResponse({ sucesso: false, erro: 'A API não retornou o XML esperado.' }, 502);
+		}
 
-    return jsonResponse({
-      sucesso: true,
-      chave: corpo.accessKey,
-      xml: corpo.xmlCode,
-      dados: extrairDadosDoXml(corpo.xmlCode),
-    });
-  } catch (e) {
-    return jsonResponse({ sucesso: false, erro: `Falha ao consultar a API: ${e.message}` }, 502);
-  }
+		return jsonResponse({
+			sucesso: true,
+			chave: corpo.accessKey,
+			xml: corpo.xmlCode,
+			dados: extrairDadosDoXml(corpo.xmlCode),
+		});
+	} catch (e) {
+		return jsonResponse({ sucesso: false, erro: `Falha ao consultar a API: ${e.message}` }, 502);
+	}
 }
 
 function extrairDadosDoXml(xmlTexto) {
-  let nomeDestinatario = 'Destinatário não encontrado';
-  let listaItens = [];
+	let nomeDestinatario = 'Destinatário não encontrado';
+	let listaItens = [];
 
-  const regexDestinatario = /<dest>[\s\S]*?<xNome>(.*?)<\/xNome>[\s\S]*?<\/dest>/i;
-  const matchDest = xmlTexto.match(regexDestinatario);
+	const regexDestinatario = /<dest>[\s\S]*?<xNome>(.*?)<\/xNome>[\s\S]*?<\/dest>/i;
+	const matchDest = xmlTexto.match(regexDestinatario);
 
-  if (matchDest && matchDest[1]) {
-    nomeDestinatario = matchDest[1];
-  } else {
-    const regexTodosNomes = /<xNome>(.*?)<\/xNome>/gi;
-    const todosNomes = [...xmlTexto.matchAll(regexTodosNomes)];
-    if (todosNomes.length >= 2) {
-      nomeDestinatario = todosNomes[1][1];
-    }
-  }
+	if (matchDest && matchDest[1]) {
+		nomeDestinatario = matchDest[1];
+	} else {
+		const regexTodosNomes = /<xNome>(.*?)<\/xNome>/gi;
+		const todosNomes = [...xmlTexto.matchAll(regexTodosNomes)];
+		if (todosNomes.length >= 2) {
+			nomeDestinatario = todosNomes[1][1];
+		}
+	}
 
-  const regexBlocoDet = /<det[^>]*>([\s\S]*?)<\/det>/gi;
-  let matchDet;
-  let index = 1;
+	const regexBlocoDet = /<det[^>]*>([\s\S]*?)<\/det>/gi;
+	let matchDet;
+	let index = 1;
 
-  const getTagValue = (bloco, tag) => {
-    const regexTag = new RegExp(`<${tag}>(.*?)<\/${tag}>`, 'i');
-    const m = bloco.match(regexTag);
-    return m ? m[1] : null;
-  };
+	const getTagValue = (bloco, tag) => {
+		const regexTag = new RegExp(`<${tag}>(.*?)<\/${tag}>`, 'i');
+		const m = bloco.match(regexTag);
+		return m ? m[1] : null;
+	};
 
-  while ((matchDet = regexBlocoDet.exec(xmlTexto)) !== null) {
-    const blocoDet = matchDet[1];
-    listaItens.push({
-      item: index++,
-      descricao: getTagValue(blocoDet, 'xProd') || 'Sem descrição',
-      quantidade: getTagValue(blocoDet, 'qCom') || '0',
-      valorUnitario: getTagValue(blocoDet, 'vUnCom') || '0',
-    });
-  }
+	while ((matchDet = regexBlocoDet.exec(xmlTexto)) !== null) {
+		const blocoDet = matchDet[1];
+		listaItens.push({
+			item: index++,
+			descricao: getTagValue(blocoDet, 'xProd') || 'Sem descrição',
+			quantidade: getTagValue(blocoDet, 'qCom') || '0',
+			valorUnitario: getTagValue(blocoDet, 'vUnCom') || '0',
+		});
+	}
 
-  return { destinatario: nomeDestinatario, itens: listaItens };
+	return { destinatario: nomeDestinatario, itens: listaItens };
 }
 
 // ---------- Notas fiscais no banco (Prisma + Aiven) ----------
 
 async function handleNotasFiscais(request, env, ctx) {
-  const adapter = new PrismaPg({ connectionString: env.HYPERDRIVE.connectionString });
-  const prisma = new PrismaClient({ adapter });
+	const adapter = new PrismaPg({ connectionString: env.HYPERDRIVE.connectionString });
+	const prisma = new PrismaClient({ adapter });
 
-  try {
-    if (request.method === 'GET') {
-      const notas = await prisma.notas_fiscais.findMany({
-        include: { itens: true },
-        orderBy: { data: 'desc' },
-      });
-      return jsonResponse(notas);
-    }
-    
+	try {
+		if (request.method === 'GET') {
+			const notas = await prisma.notas_fiscais.findMany({
+				include: { itens: true },
+				orderBy: { data: 'desc' },
+			});
+			return jsonResponse(notas);
+		}
 
-    if (request.method === 'POST') {
-  const body = await request.json();
+		if (request.method === 'POST') {
+			const body = await request.json();
 
-  // Aceita tanto uma nota única (objeto) quanto várias (array)
-  const listaDeNotas = Array.isArray(body) ? body : [body];
+			// Aceita tanto uma nota única (objeto) quanto várias (array)
+			const listaDeNotas = Array.isArray(body) ? body : [body];
 
-  console.log('Recebendo notas fiscais:', listaDeNotas.length);
+			console.log('Recebendo notas fiscais:', listaDeNotas.length);
 
-  if (listaDeNotas.length === 0) {
-    return jsonResponse({ erro: 'Nenhuma nota fiscal enviada' }, 400);
-  }
+			if (listaDeNotas.length === 0) {
+				return jsonResponse({ erro: 'Nenhuma nota fiscal enviada' }, 400);
+			}
 
-  // Monta os dados das notas (sem id — o banco continua gerando)
-  const dadosNotas = listaDeNotas.map((nota) => ({
-    data: new Date(nota.data.split('/').reverse().join('-')),
-    nNF: parseInt(nota.nNF),
-    totalCx: parseFloat(nota.totalCx),
-    pesoKg: parseFloat(nota.pesoKg),
-    frete: parseFloat(nota.frete),
-    freteUnitKg: parseFloat(nota.freteUnitKg),
-    freteUnitCx: parseFloat(nota.freteUnitCx),
-    fonte: nota.fonte,
-    destinatario: nota.destinatario,
-    destCNPJ: String(nota.destCNPJ),
-    valorNF: nota.valorNF,
-    transportadora: nota.transportadora,
-  }));
+			// Monta os dados das notas (sem id — o banco continua gerando)
+			const dadosNotas = listaDeNotas.map((nota) => ({
+				data: new Date(nota.data.split('/').reverse().join('-')),
+				nNF: parseInt(nota.nNF),
+				totalCx: parseFloat(nota.totalCx),
+				pesoKg: parseFloat(nota.pesoKg),
+				frete: parseFloat(nota.frete),
+				freteUnitKg: parseFloat(nota.freteUnitKg),
+				freteUnitCx: parseFloat(nota.freteUnitCx),
+				fonte: nota.fonte,
+				destinatario: nota.destinatario,
+				destCNPJ: String(nota.destCNPJ),
+				valorNF: nota.valorNF,
+				transportadora: nota.transportadora,
+			}));
 
-  try {
-  // Insere todas as notas de uma vez e já recebe de volta os ids gerados pelo banco
-  const notasCriadas = await prisma.notas_fiscais.createManyAndReturn({
-    data: dadosNotas,
-  });
+			try {
+				// Insere todas as notas de uma vez e já recebe de volta os ids gerados pelo banco
+				const notasCriadas = await prisma.notas_fiscais.createManyAndReturn({
+					data: dadosNotas,
+				});
 
-  // Usa o id de cada nota criada para montar os itens correspondentes
-  const todosOsItens = [];
-  notasCriadas.forEach((notaCriada, index) => {
-    const itensOriginais = listaDeNotas[index].itens ?? [];
-    itensOriginais.forEach((item) => {
-      todosOsItens.push({
-        item: item.item,
-        qtdOriginal: item.qtdOriginal,
-        unMedida: item.unMedida,
-        qtdcx: item.qtdcx,
-        peso: item.peso,
-        precoCobrado: item.precoCobrado,
-        temExcecao: item.temExcecao,
-        tipoCalculoItem: item.tipoCalculoItem,
-        nNf: notaCriada.nNF,
-        notaFiscalId: notaCriada.id, // id real que o banco gerou
-      });
-    });
-  });
+				// Usa o id de cada nota criada para montar os itens correspondentes
+				const todosOsItens = [];
+				notasCriadas.forEach((notaCriada, index) => {
+					const itensOriginais = listaDeNotas[index].itens ?? [];
+					itensOriginais.forEach((item) => {
+						todosOsItens.push({
+							item: item.item,
+							qtdOriginal: item.qtdOriginal,
+							unMedida: item.unMedida,
+							qtdcx: item.qtdcx,
+							peso: item.peso,
+							precoCobrado: item.precoCobrado,
+							temExcecao: item.temExcecao,
+							tipoCalculoItem: item.tipoCalculoItem,
+							nNf: notaCriada.nNF,
+							notaFiscalId: notaCriada.id, // id real que o banco gerou
+						});
+					});
+				});
 
-  // Insere todos os itens de uma vez, já vinculados às notas certas
-  let itensCriados = [];
-  if (todosOsItens.length > 0) {
-    itensCriados = await prisma.itens.createMany({
-      data: todosOsItens,
-    });
-  }
+				// Insere todos os itens de uma vez, já vinculados às notas certas
+				let itensCriados = [];
+				if (todosOsItens.length > 0) {
+					itensCriados = await prisma.itens.createMany({
+						data: todosOsItens,
+					});
+				}
 
-  return jsonResponse(notasCriadas, 201);
+				return jsonResponse(notasCriadas, 201);
+			} catch (error) {
+				console.log('Erro ao criar notas fiscais:', error);
+				return jsonResponse({ erro: 'Erro ao criar notas fiscais' }, 507);
+			}
+		}
 
-  }catch (error) {
-  console.log('Erro ao criar notas fiscais:', error);
-  return jsonResponse({ erro: 'Erro ao criar notas fiscais' }, 507);
-}
-}
+		if (request.method === 'DELETE') {
+			const body = await request.json().catch(() => null);
+			const id = body?.id;
+			if (!id) {
+				return jsonResponse({ erro: 'ID da nota fiscal é obrigatório' }, 400);
+			}
 
-    if (request.method === 'DELETE') {
-       
-      const body = await request.json().catch(() => null);
-      const id = body?.id;
-  if (!id) {
-    return jsonResponse({ erro: 'ID da nota fiscal é obrigatório' }, 400);
-  }
- 
-  try {
-       await prisma.itens.deleteMany({
-      where: { notaFiscalId: { in: id } },
-    });
+			try {
+				await prisma.itens.deleteMany({
+					where: { notaFiscalId: { in: id } },
+				});
 
-    const notaDeletada = await prisma.notas_fiscais.deleteMany({
-      where: { id: { in: id } },
-    });
+				const notaDeletada = await prisma.notas_fiscais.deleteMany({
+					where: { id: { in: id } },
+				});
 
-    return jsonResponse({ mensagem: 'Nota fiscal deletada com sucesso', notaDeletada });
-  } catch (erro) {
-    if (erro.code === 'P2025') {
-      return jsonResponse({ erro: 'Nota fiscal não encontrada' }, 404);
-    }
-    console.log('Erro ao deletar nota fiscal →', erro);
-    return jsonResponse({ erro: 'Erro ao deletar nota fiscal' }, 500);
-  }
-}
+				return jsonResponse({ mensagem: 'Nota fiscal deletada com sucesso', notaDeletada });
+			} catch (erro) {
+				if (erro.code === 'P2025') {
+					return jsonResponse({ erro: 'Nota fiscal não encontrada' }, 404);
+				}
+				console.log('Erro ao deletar nota fiscal →', erro);
+				return jsonResponse({ erro: 'Erro ao deletar nota fiscal' }, 500);
+			}
+		}
 
-    return jsonResponse({ erro: 'Método não suportado nessa rota' }, 405);
-  }  catch (error) {
-  // Tratamento de erros
-  console.error("Erro na execução:", error);
-  throw error;
-  } finally {
-    ctx.waitUntil(prisma.$disconnect());
-  }
+		return jsonResponse({ erro: 'Método não suportado nessa rota' }, 405);
+	} catch (error) {
+		// Tratamento de erros
+		console.error('Erro na execução:', error);
+		throw error;
+	} finally {
+		ctx.waitUntil(prisma.$disconnect());
+	}
 }
 
 function jsonResponse(obj, status = 200) {
-  return new Response(JSON.stringify(obj), {
-    status,
-    headers: { 'Content-Type': 'application/json', ...corsHeaders },
-  });
+	return new Response(JSON.stringify(obj), {
+		status,
+		headers: { 'Content-Type': 'application/json', ...corsHeaders },
+	});
 }

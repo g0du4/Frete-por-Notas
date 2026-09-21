@@ -133,26 +133,11 @@
         .cfg-grid-row { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; font-size: 12px; flex-wrap: wrap; }
         .cfg-grid-row input[type="number"] { width: 60px; padding: 4px 6px; border: 1px solid var(--color-border); border-radius: 4px; text-align: center; }
         .export-field-row label input, .export-field-row .field-border input[type=checkbox] {
-            appearance: none;
-            width: 34px;
-            height: 16px;
-            background: #838383;
-            border-radius: 999px;
-            cursor: pointer;
-            transition: 0.2s;
-            position: relative;
+            appearance: none; width: 34px; height: 16px; background: #838383; border-radius: 999px; cursor: pointer; transition: 0.2s; position: relative;
         }
         
         .export-field-row label input::before, .export-field-row .field-border input[type=checkbox]:before {
-            content: "";
-            width: 12px;
-            height: 12px;
-            background: white;
-            border-radius: 50%;
-            position: absolute;
-            top: 2px;
-            left: 3px;
-            transition: 0.2s;
+            content: ""; width: 12px;  height: 12px; background: white; border-radius: 50%; position: absolute; top: 2px;  left: 3px; transition: 0.2s;
         }
         
         .export-field-row label input:checked, .export-field-row .field-border input[type=checkbox]:checked{background: #00da50;}
@@ -2878,12 +2863,16 @@ function formatarDataDBParaTela(dataISO) {
             const data = await resposta.json();
             console.log(data);
 
+
+
+
+
         } catch (error) {
             console.error('Erro ao excluir registros:', error);
             return mostrarToastAviso('Erro ao excluir registros. Tente novamente.');
         }
 
-
+        atualizarbd();
         ST.registros = ST.registros.filter(function(r){ return !todosIds.includes(String(r.id)); });
         persistirDados();
         renderHistoricoCompleto();
@@ -2898,6 +2887,22 @@ function formatarDataDBParaTela(dataISO) {
         reg.freteUnitCx = reg.totalCx > 0 ? (valorNumerico / reg.totalCx) : 0;
         persistirDados();
         renderHistoricoFiltrado();
+    }
+
+    function atualizarbd() {
+        // Atualiza o backend com os dados atuais do ST.registros
+        fetch(`${URL_BACKEND}/notas-fiscais`, {
+            method: 'OPTIONS'
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Dados atualizados no backend:', data);
+            mostrarToastAviso('Dados atualizados no backend com sucesso.');
+        })
+        .catch(error => {
+            console.error('Erro ao atualizar dados no backend:', error);
+            mostrarToastAviso('Erro ao atualizar dados no backend. Tente novamente.');
+        });
     }
 
     function alternarExibicaoItensHistorico(idReg) {            
