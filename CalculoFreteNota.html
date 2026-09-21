@@ -2864,7 +2864,10 @@ function formatarDataDBParaTela(dataISO) {
             console.log(data);
 
 
-
+             if (data.notaDeletada.count === 0) {
+                return mostrarToastAviso('Nenhum registro foi excluído. Verifique se os registros ainda existem no banco.');
+    throw new Error("Resposta inválida do servidor: " + JSON.stringify(dados));
+  }
 
 
         } catch (error) {
