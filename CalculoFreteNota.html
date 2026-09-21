@@ -2872,7 +2872,6 @@ function formatarDataDBParaTela(dataISO) {
             return mostrarToastAviso('Erro ao excluir registros. Tente novamente.');
         }
 
-        atualizarbd();
         ST.registros = ST.registros.filter(function(r){ return !todosIds.includes(String(r.id)); });
         persistirDados();
         renderHistoricoCompleto();
@@ -2887,22 +2886,6 @@ function formatarDataDBParaTela(dataISO) {
         reg.freteUnitCx = reg.totalCx > 0 ? (valorNumerico / reg.totalCx) : 0;
         persistirDados();
         renderHistoricoFiltrado();
-    }
-
-    function atualizarbd() {
-        // Atualiza o backend com os dados atuais do ST.registros
-        fetch(`${URL_BACKEND}/notas-fiscais`, {
-            method: 'OPTIONS'
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Dados atualizados no backend:', data);
-            mostrarToastAviso('Dados atualizados no backend com sucesso.');
-        })
-        .catch(error => {
-            console.error('Erro ao atualizar dados no backend:', error);
-            mostrarToastAviso('Erro ao atualizar dados no backend. Tente novamente.');
-        });
     }
 
     function alternarExibicaoItensHistorico(idReg) {            
