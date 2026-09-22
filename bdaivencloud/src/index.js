@@ -201,15 +201,25 @@ async function handleNotasFiscais(request, env, ctx) {
 			}
 
 			try {
-				await prisma.itens.deleteMany({
+				/* await prisma.itens.deleteMany({
 					where: { notaFiscalId: { in: id } },
 				});
 
 				const notaDeletada = await prisma.notas_fiscais.deleteMany({
 					where: { id: { in: id } },
-				});
+				}); */
 
-        if(notaDeletada.count){return jsonResponse({ mensagem: 'Nota fiscal deletada com sucesso', notaDeletada });}
+				const notaDeletada =   await prisma.$transaction([
+				prisma.itens.deleteMany({
+					where: { notaFiscalId: { in: id } },
+				}),
+				prisma.notas_fiscais.deleteMany({
+					where: { id: { in: id } },
+				}),
+				]);
+
+
+        if(true){return jsonResponse({ mensagem: 'Nota fiscal deletada com sucesso', notaDeletada });}
 			
     } catch (erro) {
 				if (erro.code === 'P2025') {
